@@ -67,3 +67,46 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .line-mask > span { transform: none !important; }
 }
+
+/* ===== البريلودر =====
+   بيتعرض مرة واحدة في الجلسة. الكلاس بيتحط من سكربت inline في الـhead
+   قبل أول رسم، عشان الزائر الراجع مايشوفش ومضة. */
+.intro {
+  position: fixed; inset: 0; z-index: 9000;
+  background: var(--ink);
+  display: grid; place-content: center;
+  will-change: transform;
+}
+/* خط الأكسنت على حرف البريلودر — بيبقى هو الحافة القُدّام وقت المسح،
+   زي transition في المونتاج */
+.intro::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: var(--accent);
+}
+html.intro-off .intro { display: none; }
+/* القفل على الـhtml مش الـbody: Lenis بيكتب على الـbody */
+html.intro-on { overflow: hidden; }
+
+.intro-mark {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 7vw, 5rem);
+  font-weight: 700; line-height: .95; letter-spacing: -.03em;
+  text-align: center;
+}
+.intro-line { display: block; overflow: hidden; }
+.intro-line > span { display: block; transform: translateY(105%); }
+.intro-line:last-child > span { color: var(--accent); }
+
+.intro-tc {
+  position: absolute; right: var(--s-4); bottom: var(--s-4);
+  font-variant-numeric: tabular-nums;
+}
+.intro-bar {
+  position: absolute; left: var(--s-4); bottom: calc(var(--s-4) + 2px);
+  width: clamp(80px, 18vw, 200px); height: 1px;
+  background: var(--line);
+}
+.intro-bar::before {
+  content: ''; display: block; height: 100%; width: var(--p, 0%);
+  background: var(--text-dim);
+}

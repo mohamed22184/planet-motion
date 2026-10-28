@@ -1,19 +1,69 @@
 ---
 import Base from '../layouts/Base.astro';
 
-// مواقع الكروت في فراغ ثلاثي الأبعاد، بالبكسل، والمركز (0,0,0).
-// الكاميرا بتتنقل بينهم زي ما بتتنقل بين لقطات على تايم لاين.
-const shots = [
-  { id: 'reel',    label: 'Reel 2026', meta: '01:24',          x:    0, y:    0, z:  -250, w: 640, ar: '16 / 9' },
-  { id: 'motion',  label: 'Motion',    meta: '18 projects',    x: -900, y: -460, z: -1000, w: 380, ar: '1 / 1'  },
-  { id: 'ai',      label: 'AI',        meta: '06 projects',    x:  950, y: -380, z: -1500, w: 300, ar: '9 / 16' },
-  { id: 'edit',    label: 'Edit',      meta: '11 projects',    x: -820, y:  520, z:  -760, w: 440, ar: '16 / 9' },
-  { id: 'about',   label: 'About',     meta: 'Cairo / Riyadh', x: 1020, y:  480, z: -1850, w: 360, ar: '1 / 1'  },
-  { id: 'contact', label: 'Contact',   meta: "Let's talk",     x: -160, y:  900, z: -2300, w: 420, ar: '16 / 9' },
+// كل قسم = مجموعة فيديوهات في عنقود ثلاثي الأبعاد.
+// x/y/z = مركز العنقود · العناصر متوزعة حواليه بإزاحات صغيرة
+// عشان يبقى للعنقود نفسه عمق جوّاه.
+const sections = [
+  {
+    id: 'reel', label: 'Reel 2026', meta: '01:24', d: 470,
+    x: 0, y: 0, z: -250,
+    items: [{ w: 640, ar: '16 / 9', dx: 0, dy: 0, dz: 0, tc: '00:00' }],
+  },
+  {
+    id: 'motion', label: 'Motion', meta: '05 films', d: 180,
+    x: -1500, y: -620, z: -1300,
+    items: [
+      { w: 400, ar: '16 / 9', dx: -300, dy: -170, dz:  160, tc: '00:42' },
+      { w: 300, ar: '1 / 1',  dx:  230, dy: -210, dz:  -90, tc: '01:10' },
+      { w: 340, ar: '16 / 9', dx:  300, dy:  180, dz:  250, tc: '00:28' },
+      { w: 230, ar: '9 / 16', dx: -330, dy:  220, dz: -180, tc: '00:55' },
+      { w: 270, ar: '1 / 1',  dx:  -20, dy:   30, dz: -340, tc: '02:06' },
+    ],
+  },
+  {
+    id: 'ai', label: 'AI', meta: '04 experiments', d: 190,
+    x: 1560, y: -520, z: -1900,
+    items: [
+      { w: 250, ar: '9 / 16', dx: -260, dy: -120, dz:  140, tc: '00:18' },
+      { w: 330, ar: '16 / 9', dx:  240, dy: -180, dz: -120, tc: '00:33' },
+      { w: 290, ar: '1 / 1',  dx:  200, dy:  200, dz:  220, tc: '00:47' },
+      { w: 310, ar: '16 / 9', dx: -230, dy:  210, dz: -200, tc: '01:02' },
+    ],
+  },
+  {
+    id: 'edit', label: 'Edit', meta: '04 cuts', d: 185,
+    x: -1400, y: 760, z: -900,
+    items: [
+      { w: 380, ar: '16 / 9', dx: -270, dy: -150, dz:  180, tc: '01:35' },
+      { w: 280, ar: '1 / 1',  dx:  250, dy: -170, dz: -140, tc: '00:51' },
+      { w: 340, ar: '16 / 9', dx:  210, dy:  200, dz:  200, tc: '02:14' },
+      { w: 240, ar: '9 / 16', dx: -280, dy:  220, dz: -210, tc: '00:39' },
+    ],
+  },
+  {
+    id: 'about', label: 'About', meta: 'Cairo / Riyadh', d: 300,
+    x: 1680, y: 700, z: -2500,
+    items: [{ w: 420, ar: '1 / 1', dx: 0, dy: 0, dz: 0, tc: '—' }],
+  },
+  {
+    id: 'contact', label: 'Contact', meta: "Let's talk", d: 300,
+    x: -200, y: 1400, z: -3100,
+    items: [{ w: 480, ar: '16 / 9', dx: 0, dy: 0, dz: 0, tc: '—' }],
+  },
 ];
+
+// جزيئات عالقة في الفراغ — مرجع بصري للعمق. البارالاكس بتاعها
+// بييجي من الـperspective لوحده، من غير أي جافاسكريبت.
+const motes = Array.from({ length: 46 }, (_, i) => ({
+  x: (((i * 733) % 4000) - 2000),
+  y: (((i * 457) % 3200) - 1300),
+  z: -(((i * 311) % 3400) + 120),
+  s: ((i * 97) % 3) + 1,
+}));
 ---
 
-<Base title="Camera — Planet Motion">
+<Base title="Planet Motion">
   <div class="furniture">
     <span class="mono tl">Planet<br />Motion</span>
     <span class="mono tr">Menu</span>
@@ -21,36 +71,50 @@ const shots = [
     <span class="mono br" id="tc">00:00:00:00</span>
   </div>
 
-  <!-- شريط اللقطات — زي ماركرات التايم لاين -->
-  <nav class="shotbar" id="shotbar">
-    {shots.map((s, i) => (
-      <button class="shot-btn" data-go={i + 1} type="button">
-        <span class="mono">{String(i + 1).padStart(2, '0')}</span>
-        <span class="shot-name">{s.label}</span>
-      </button>
-    ))}
-  </nav>
-
   <section class="stage">
     <div class="scene">
       <div class="world" id="world">
-        {shots.map((s, i) => (
-          <article
-            class="card"
-            id={`s-${s.id}`}
-            data-i={i}
-            data-x={s.x} data-y={s.y} data-z={s.z} data-w={s.w}
-          >
-            <div class="thumb" style={`aspect-ratio:${s.ar}`}>
-              <span class="ar mono">{s.ar.replace(/ /g, '')}</span>
-            </div>
-            <div class="meta">
-              <strong>{s.label}</strong>
-              <span class="mono">{s.meta}</span>
-            </div>
-          </article>
+        {motes.map((m) => (
+          <i class="mote" data-x={m.x} data-y={m.y} data-z={m.z} style={`width:${m.s}px;height:${m.s}px`}></i>
+        ))}
+
+        {sections.map((sec, si) =>
+          sec.items.map((it, ii) => (
+            <article
+              class="card"
+              data-sec={si}
+              data-x={sec.x + it.dx} data-y={sec.y + it.dy} data-z={sec.z + it.dz}
+              data-w={it.w}
+            >
+              <div class="thumb" style={`aspect-ratio:${it.ar}`}>
+                <span class="ar mono">{it.ar.replace(/ /g, '')}</span>
+                <span class="dur mono">{it.tc}</span>
+              </div>
+            </article>
+          )),
+        )}
+      </div>
+      <div class="vignette"></div>
+    </div>
+
+    <!-- ===== شريط اللقطات ===== -->
+    <nav class="bar" id="bar" aria-label="Shots">
+      <div class="bar-track"><span class="bar-fill" id="barFill"></span></div>
+      <div class="bar-items">
+        {sections.map((s, i) => (
+          <button class="bar-btn" data-go={i + 2} data-meta={s.meta} type="button">
+            <span class="n mono">{String(i + 1).padStart(2, '0')}</span>
+            <span class="t">{s.label}</span>
+            <span class="c mono">{s.items.length}</span>
+          </button>
         ))}
       </div>
+    </nav>
+
+    <!-- عنوان القسم: عنصر ثابت في الواجهة، فمابيتقطعش مع حركة الكاميرا -->
+    <div class="title" id="title" aria-live="polite">
+      <strong id="titleName">Reel 2026</strong>
+      <span class="mono" id="titleMeta">01:24</span>
     </div>
 
     <div class="hud mono" id="hud">Scroll · click a shot · ← →</div>
@@ -72,66 +136,93 @@ const shots = [
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2.4s infinite; }
   @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
 
-  /* ===== شريط اللقطات ===== */
-  .shotbar {
-    position: fixed; z-index: 55; left: 50%; bottom: var(--s-5);
-    transform: translateX(-50%);
-    display: flex; gap: 1px; background: var(--line);
-    border: 1px solid var(--line);
-  }
-  .shot-btn {
-    display: flex; align-items: center; gap: 7px;
-    padding: 7px 13px; border: 0; background: var(--ink);
-    color: var(--text-mute); font: inherit; cursor: pointer;
-    transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
-  }
-  .shot-btn .mono { font-size: 9px; }
-  .shot-name { font-family: var(--font-display); font-size: .75rem; letter-spacing: -.01em; }
-  .shot-btn:hover { color: var(--text); }
-  .shot-btn[aria-current='true'] { background: var(--accent); color: var(--accent-ink); }
-  .shot-btn[aria-current='true'] .mono { color: var(--accent-ink); }
-
-  /* ===== المسرح ===== */
-  .stage { height: 700vh; position: relative; }
+  .stage { height: 760vh; position: relative; }
   .scene {
     position: sticky; top: 0; height: 100vh;
-    perspective: 900px;              /* أقل = منظور أقوى وأكثر دراما */
+    /* الـperspective بتتظبط من الجافاسكريبت عشان تتقاس مع باقي الأبعاد */
     perspective-origin: 50% 50%;
     overflow: hidden;
   }
-  .world {
-    position: absolute; left: 50%; top: 50%;
-    width: 0; height: 0;
-    transform-style: preserve-3d;
+  .world { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; }
+
+  /* فينيت — بيقفل حواف الفريم فالعين تروح للنص وتحس بعمق أكتر */
+  .vignette {
+    position: absolute; inset: 0; pointer-events: none; z-index: 5;
+    background: radial-gradient(ellipse 70% 62% at 50% 50%, transparent 40%, rgba(10,7,6,.72) 100%);
   }
 
-  .card { position: absolute; left: 0; top: 0; will-change: transform, filter; }
+  .mote {
+    position: absolute; left: 0; top: 0; display: block;
+    border-radius: 50%; background: var(--text-dim); opacity: .16;
+  }
+
+  .card { position: absolute; left: 0; top: 0; will-change: transform, filter, opacity; }
   .thumb {
     position: relative; background: var(--surface-1);
     border: 1px solid var(--line);
   }
   .thumb::after {
     content: ''; position: absolute; inset: 0; pointer-events: none;
-    background: linear-gradient(135deg, rgba(245,245,245,.055), transparent 46%);
+    background: linear-gradient(135deg, rgba(245,245,245,.06), transparent 46%);
   }
   .card.is-focus .thumb { border-color: var(--accent); }
-  .ar { position: absolute; left: 8px; bottom: 7px; font-size: 11px; }
-  .meta { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-3); padding-top: 11px; }
-  .meta strong { font-family: var(--font-display); font-size: 1.35rem; letter-spacing: -.02em; }
-  .meta .mono { font-size: 11px; }
+  .ar  { position: absolute; left: 8px;  bottom: 7px; font-size: 11px; }
+  .dur { position: absolute; right: 8px; bottom: 7px; font-size: 11px; }
+  .title {
+    position: fixed; z-index: 20; left: var(--s-5); bottom: calc(var(--s-5) + 64px);
+    display: flex; align-items: baseline; gap: var(--s-3);
+  }
+  .title strong {
+    font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 3.2rem);
+    letter-spacing: -.03em; line-height: 1;
+  }
+  .title .mono { font-size: 11px; }
 
-  .hud { position: absolute; left: 50%; top: var(--s-6); transform: translateX(-50%); z-index: 20; }
+  /* ===== شريط اللقطات — بيتصرف كأداة مونتاج ===== */
+  .bar {
+    position: fixed; z-index: 55; left: 50%; bottom: var(--s-5);
+    transform: translateX(-50%);
+    background: rgba(20, 15, 13, .76);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--line);
+    opacity: 0; transition: opacity .45s var(--ease-out);
+  }
+  .bar.is-on { opacity: 1; }
+  .bar-track { height: 2px; background: var(--line); position: relative; }
+  .bar-fill {
+    position: absolute; left: 0; top: 0; height: 100%; width: 0;
+    background: var(--accent);
+  }
+  .bar-items { display: flex; }
+  .bar-btn {
+    position: relative; display: flex; align-items: baseline; gap: 8px;
+    padding: 10px 16px; border: 0; border-right: 1px solid var(--line);
+    background: transparent; color: var(--text-mute); font: inherit; cursor: pointer;
+    transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+  }
+  .bar-btn:last-child { border-right: 0; }
+  .bar-btn .n { font-size: 9px; opacity: .65; }
+  .bar-btn .t { font-family: var(--font-display); font-size: .8rem; letter-spacing: -.01em; }
+  .bar-btn .c {
+    font-size: 9px; padding: 1px 4px;
+    border: 1px solid var(--line); color: var(--text-mute);
+  }
+  .bar-btn:hover { color: var(--text); background: rgba(245,245,245,.04); }
+  .bar-btn[aria-current='true'] { color: var(--text); background: rgba(230,81,0,.14); }
+  .bar-btn[aria-current='true'] .n { color: var(--accent); opacity: 1; }
+  .bar-btn[aria-current='true'] .c { border-color: var(--accent); color: var(--accent); }
+
+  .hud { position: fixed; left: 50%; top: var(--s-6); transform: translateX(-50%); z-index: 20; }
 
   .after { padding-block: var(--s-8); border-top: 1px solid var(--line); }
   .after h2 { font-size: var(--t-h1); }
   .lede { color: var(--text-dim); max-width: 60ch; text-align: start; margin-top: var(--s-4); }
 
   @media (max-width: 760px) {
-    .scene { perspective: 620px; }
-    .shotbar { bottom: var(--s-6); max-width: calc(100vw - 16px); overflow-x: auto; }
-    .shot-btn { padding: 6px 9px; }
-    .shot-name { font-size: .7rem; }
-    .meta strong { font-size: 1rem; }
+    .bar { bottom: var(--s-5); max-width: calc(100vw - 12px); overflow-x: auto; }
+    .bar-btn { padding: 8px 10px; gap: 6px; }
+    .bar-btn .t { font-size: .72rem; }
+    .title { left: var(--s-3); bottom: calc(var(--s-5) + 58px); }
   }
 </style>
 
@@ -143,55 +234,106 @@ const shots = [
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const world = document.querySelector<HTMLElement>('#world')!;
   const cards = gsap.utils.toArray<HTMLElement>('.card');
+  const motes = gsap.utils.toArray<HTMLElement>('.mote');
   const hud = document.querySelector<HTMLElement>('#hud')!;
-  const buttons = gsap.utils.toArray<HTMLButtonElement>('.shot-btn');
+  const bar = document.querySelector<HTMLElement>('#bar')!;
+  const barFill = document.querySelector<HTMLElement>('#barFill')!;
+  const buttons = gsap.utils.toArray<HTMLButtonElement>('.bar-btn');
 
-  // الكاميرا بتبص على نقطة (الهدف) من مسافة معينة.
-  // الدوران بيحصل حوالين الهدف نفسه مش حوالين الكاميرا — ده اللي بيخلي
-  // اللقطة المركّز عليها تفضل في نص الفريم مهما كان الميل.
-  // التقريب الناتج = perspective / (perspective - d). يعني نفس الـd بيدي
-  // تقريب أكبر لما الـperspective تقل. عشان كده بنضرب المسافات في نسبة
-  // الـperspective، فالتكوين يفضل واحد على كل المقاسات.
-  const PERSP = innerWidth < 760 ? 620 : 900;   // لازم تطابق الـCSS
-  const k = PERSP / 900;
-  const FOCUS_D = 330 * k;   // مسافة المشاهدة للقطة المركّز عليها
-  const OPEN_D = 470 * k;    // اللقطة الافتتاحية: أقرب، الـReel بيملا الفريم
-  const WIDE_D = -800 * k;   // اللقطة الواسعة: بعيد، الفراغ كله باين
+  // التقريب = perspective / (perspective - d). عشان نفس التكوين يظهر
+  // على أي مقاس، لازم كل الأطوال تتقاس بنفس النسبة — المواقع والعروض
+  // والمسافات **والـperspective نفسها**. لو الـperspective فضلت ثابتة
+  // المشهد بيصغر على الشاشة الصغيرة بدل ما يتقاس.
+  const scene = document.querySelector<HTMLElement>('.scene')!;
 
-  // الفراغ متصمم على 1280px. على الشاشة الأضيق بنصغّره كله بنفس النسبة.
-  const fit = Math.min(1, innerWidth / 1280);
-
-  type Shot = { el: HTMLElement; x: number; y: number; z: number; w: number };
-  const shots: Shot[] = cards.map((el) => ({
-    el,
-    x: Number(el.dataset.x) * fit,
-    y: Number(el.dataset.y) * fit,
-    z: Number(el.dataset.z) * fit,
-    w: Number(el.dataset.w) * fit,
+  type Card = {
+    el: HTMLElement; sec: number;
+    bx: number; by: number; bz: number; bw: number;   // القيم الأساسية
+    x: number; y: number; z: number;                  // بعد القياس
+  };
+  const items: Card[] = cards.map((el) => ({
+    el, sec: Number(el.dataset.sec),
+    bx: Number(el.dataset.x), by: Number(el.dataset.y),
+    bz: Number(el.dataset.z), bw: Number(el.dataset.w),
+    x: 0, y: 0, z: 0,
   }));
 
-  shots.forEach((s) => {
-    s.el.style.width = `${s.w}px`;
-    gsap.set(s.el, { xPercent: -50, yPercent: -50, x: s.x, y: s.y, z: s.z });
-  });
+  let fit = 1;
 
-  // ===== نقاط توقف الكاميرا =====
-  // 0 = قريب على الـReel · 1 = لقطة واسعة · 2.. = كل لقطة بالترتيب
-  const waypoints = [
-    { tx: shots[0].x, ty: shots[0].y, tz: shots[0].z, d: OPEN_D, rx: 0, ry: 0 },
-    { tx: 0, ty: 80 * fit, tz: -1100 * fit, d: WIDE_D, rx: 0, ry: 0 },
-    ...shots.map((s) => ({ tx: s.x, ty: s.y, tz: s.z, d: FOCUS_D, rx: 0, ry: 0 })),
-  ];
+  // العنقود محتاج الكاميرا ترجع لورا عشان يدخل الفريم كله؛
+  // الكارت الواحد محتاجها تقرّب.
+  const SEC_D_BASE = [470, -130, -110, -120, 300, 300];
+  type WP = { tx: number; ty: number; tz: number; d: number; rx: number; ry: number };
+  let waypoints: WP[] = [];
 
-  // الكاميرا بتميل في اتجاه حركتها — ده اللي بيدي إحساس إن فيه كاميرا أصلًا
-  for (let i = 1; i < waypoints.length; i++) {
-    const dx = waypoints[i].tx - waypoints[i - 1].tx;
-    const dy = waypoints[i].ty - waypoints[i - 1].ty;
-    waypoints[i].ry = gsap.utils.clamp(-16, 16, -dx / 70);
-    waypoints[i].rx = gsap.utils.clamp(-10, 10, dy / 95);
-  }
+  // اللقطة الواسعة متحسوبة من امتداد الكروت الفعلي، مش أرقام ثابتة —
+  // كده أي تعديل في المواقع بيتظبط لوحده.
+  const computeWide = (): WP => {
+    const halfW = items.map((c) => Math.abs(c.x) + (Number(c.el.dataset.w) * fit) / 2);
+    const halfH = items.map((c) => Math.abs(c.y) + (Number(c.el.dataset.w) * fit) / 2);
+    const xs = items.map((c) => c.x), ys = items.map((c) => c.y), zs = items.map((c) => c.z);
+    const tx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const ty = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const tz = (Math.min(...zs) + Math.max(...zs)) / 2;
 
-  const cam = { ...waypoints[0] };
+    const P = 900 * fit;
+    // التقريب المطلوب عشان الامتداد كله يدخل الفريم مع هامش
+    const need = Math.min(
+      (innerWidth / 2) * 0.82 / Math.max(...halfW),
+      (innerHeight / 2) * 0.72 / Math.max(...halfH),
+    );
+    // الكروت الأقرب بتتكبر أكتر من المركز، فبناخد هامش أمان
+    const d = P * (1 - 1 / (need * 0.78));
+    return { tx, ty, tz, d, rx: 0, ry: 0 };
+  };
+
+  // كل الأطوال بتتقاس بنفس النسبة — المواقع والعروض والمسافات
+  // والـperspective. لازم تتنادى تاني مع أي تغيير في مقاس النافذة،
+  // وإلا التكوين بيبوظ.
+  const layout = () => {
+    fit = Math.min(1, innerWidth / 1440);
+    scene.style.perspective = `${900 * fit}px`;
+
+    items.forEach((c) => {
+      c.x = c.bx * fit; c.y = c.by * fit; c.z = c.bz * fit;
+      c.el.style.width = `${c.bw * fit}px`;
+      gsap.set(c.el, { xPercent: -50, yPercent: -50, x: c.x, y: c.y, z: c.z });
+    });
+    motes.forEach((m) => {
+      gsap.set(m, {
+        xPercent: -50, yPercent: -50,
+        x: Number(m.dataset.x) * fit, y: Number(m.dataset.y) * fit, z: Number(m.dataset.z) * fit,
+      });
+    });
+
+    const secs = [...new Set(items.map((i) => i.sec))].map((si) => {
+      const g = items.filter((i) => i.sec === si);
+      return {
+        x: g.reduce((a, b) => a + b.x, 0) / g.length,
+        y: g.reduce((a, b) => a + b.y, 0) / g.length,
+        z: g.reduce((a, b) => a + b.z, 0) / g.length,
+      };
+    });
+
+    waypoints = [
+      // 0 = قريب على الـReel · 1 = لقطة واسعة بتكشف الفراغ كله · 2.. = كل قسم
+      { tx: secs[0].x, ty: secs[0].y, tz: secs[0].z, d: SEC_D_BASE[0] * fit, rx: 0, ry: 0 },
+      computeWide(),
+      ...secs.map((s, i) => ({ tx: s.x, ty: s.y, tz: s.z, d: SEC_D_BASE[i] * fit, rx: 0, ry: 0 })),
+    ];
+
+    // الكاميرا بتميل في اتجاه حركتها
+    for (let i = 1; i < waypoints.length; i++) {
+      const dx = waypoints[i].tx - waypoints[i - 1].tx;
+      const dy = waypoints[i].ty - waypoints[i - 1].ty;
+      waypoints[i].ry = gsap.utils.clamp(-18, 18, -dx / 95);
+      waypoints[i].rx = gsap.utils.clamp(-11, 11, dy / 120);
+    }
+  };
+
+  layout();
+
+  const cam: WP = { ...waypoints[0] };
   const rad = (d: number) => (d * Math.PI) / 180;
 
   const applyCamera = () => {
@@ -199,81 +341,194 @@ const shots = [
       `translateZ(${cam.d}px) rotateX(${cam.rx}deg) rotateY(${cam.ry}deg) ` +
       `translate3d(${-cam.tx}px, ${-cam.ty}px, ${-cam.tz}px)`;
 
-    // نفس حساب المتصفح، عشان نعرف عمق كل كارت بعد الدوران ونحط التمويه الصح.
     const sy = Math.sin(rad(cam.ry)), cy = Math.cos(rad(cam.ry));
     const sx = Math.sin(rad(cam.rx)), cx = Math.cos(rad(cam.rx));
 
-    shots.forEach((s) => {
-      const px = s.x - cam.tx, py = s.y - cam.ty, pz = s.z - cam.tz;
-      const z1 = -px * sy + pz * cy;        // بعد rotateY
-      const eff = py * sx + z1 * cx + cam.d; // بعد rotateX والمسافة
-      // بنقرّب لـ0.5px عشان مانجبرش المتصفح يعيد الرسم على كل جزء من بكسل
-      const b = Math.round(Math.min(Math.abs(eff - cam.d) / (430 * k), 6) * 2) / 2;
-      if (s.el.dataset.b !== String(b)) {
-        s.el.style.filter = b ? `blur(${b}px)` : 'none';
-        s.el.dataset.b = String(b);
+    items.forEach((c) => {
+      const px = c.x - cam.tx, py = c.y - cam.ty, pz = c.z - cam.tz;
+      const z1 = -px * sy + pz * cy;
+      const eff = py * sx + z1 * cx + cam.d;
+      const dist = Math.abs(eff - cam.d);
+
+      // تمويه (عمق ميدان) + خفوت (عمق جوي). الاتنين مع بعض هما اللي
+      // بيخلّوا المخ يقرا المسافة — التمويه لوحده مابيكفيش.
+      const b = Math.round(Math.min(dist / (520 * fit), 7) * 2) / 2;
+      const o = Math.round(Math.max(1 - dist / (3400 * fit), 0.12) * 20) / 20;
+
+      if (c.el.dataset.b !== String(b)) {
+        c.el.style.filter = b ? `blur(${b}px)` : 'none';
+        c.el.dataset.b = String(b);
+      }
+      if (c.el.dataset.o !== String(o)) {
+        c.el.style.opacity = String(o);
+        c.el.dataset.o = String(o);
       }
     });
   };
 
+  const titleName = document.querySelector<HTMLElement>('#titleName')!;
+  const titleMeta = document.querySelector<HTMLElement>('#titleMeta')!;
+  const labels = buttons.map((b) => ({
+    name: b.querySelector('.t')!.textContent!,
+    meta: b.dataset.meta || '',
+  }));
+
+  let lastSec = -2;
   const setCurrent = (i: number) => {
-    buttons.forEach((b, bi) => b.setAttribute('aria-current', String(bi === i - 2)));
-    shots.forEach((s, si) => s.el.classList.toggle('is-focus', si === i - 2));
+    const s = i - 2;
+    if (s === lastSec) return;
+    lastSec = s;
+    buttons.forEach((b, bi) => b.setAttribute('aria-current', String(bi === s)));
+    items.forEach((c) => c.el.classList.toggle('is-focus', c.sec === s));
+    if (s === -1) {
+      titleName.textContent = 'All work';
+      titleMeta.textContent = `${labels.length} sections`;
+    } else {
+      const l = labels[s];
+      if (l) { titleName.textContent = l.name; titleMeta.textContent = l.meta; }
+    }
   };
 
   applyCamera();
+
+  const segs = waypoints.length - 1;
+  const EASE = gsap.parseEase('power3.inOut');
+
+  // الكاميرا بقت دالة في التقدّم بدل تايم لاين من تويناتproximity متتابعة.
+  // ده اللي بيخلّي القفزة المباشرة ممكنة: السكرول بيحرّك p، والقفزة
+  // بتحرّك الكاميرا نفسها من غير ما تعدّي على النقط اللي في النص.
+  const applyProgress = (p: number) => {
+    const t = gsap.utils.clamp(0, segs, p * segs);
+    const i = Math.min(Math.floor(t), segs - 1);
+    const f = EASE(t - i);
+    const a = waypoints[i], b = waypoints[i + 1];
+    cam.tx = a.tx + (b.tx - a.tx) * f;
+    cam.ty = a.ty + (b.ty - a.ty) * f;
+    cam.tz = a.tz + (b.tz - a.tz) * f;
+    cam.d  = a.d  + (b.d  - a.d)  * f;
+    cam.rx = a.rx + (b.rx - a.rx) * f;
+    cam.ry = a.ry + (b.ry - a.ry) * f;
+    applyCamera();
+  };
+
+  applyProgress(0);
 
   if (reduced) {
     Object.assign(cam, waypoints[1]);
     applyCamera();
     gsap.set(hud, { opacity: 0 });
+    bar.classList.add('is-on');
   } else {
-    const segs = waypoints.length - 1;
+    let jumping = false;
+    const prog = { p: 0 };
+
     const tl = gsap.timeline({
       scrollTrigger: {
-        trigger: '.stage',
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: 1.1,
-        onUpdate: (self) => setCurrent(Math.round(self.progress * segs)),
+        trigger: '.stage', start: 'top top', end: 'bottom bottom', scrub: 1.1,
+        onUpdate: (self) => {
+          setCurrent(Math.round(self.progress * segs));
+          barFill.style.width = `${self.progress * 100}%`;
+        },
       },
     });
-
-    for (let i = 1; i < waypoints.length; i++) {
-      tl.to(cam, {
-        ...waypoints[i],
-        duration: 1,
-        // inOut: الحركة بتبدأ وتقف بهدوء، زي حركة كاميرا حقيقية
-        ease: i === 1 ? 'power2.inOut' : 'power3.inOut',
-        onUpdate: applyCamera,
-      });
-    }
+    tl.to(prog, {
+      p: 1, duration: 1, ease: 'none',
+      onUpdate: () => { if (!jumping) applyProgress(prog.p); },
+    });
 
     tl.to(hud, { opacity: 0, duration: 0.3, ease: 'none' }, 0);
 
+    // الشريط بيظهر مع الحركة وبيختفي بعد سكون — الواجهة تسيب الشغل يتكلم
+    let hideT: number;
+    const showBar = () => {
+      bar.classList.add('is-on');
+      clearTimeout(hideT);
+      hideT = window.setTimeout(() => bar.classList.remove('is-on'), 2600);
+    };
+    ['mousemove', 'wheel', 'touchstart', 'keydown'].forEach((e) =>
+      addEventListener(e, showBar, { passive: true }),
+    );
+    bar.addEventListener('mouseenter', () => clearTimeout(hideT));
+    bar.addEventListener('mouseleave', showBar);
+
     // ===== التنقّل =====
-    // الكليك والأسهم بيحركوا السكرول، فالسكرول يفضل هو المصدر الوحيد للحقيقة
-    const stage = document.querySelector<HTMLElement>('.stage')!;
     let idx = 0;
-    const goTo = (i: number) => {
-      idx = gsap.utils.clamp(0, segs, i);
-      const y = stage.offsetTop + (stage.offsetHeight - innerHeight) * (idx / segs);
+
+    // السكرول بيمشي على النقط بالترتيب (ده المقصود منه).
+    // لكن الكليك والأسهم بيروحوا على طول: بنحرّك السكرول فورًا من غير
+    // scrub عشان مايتفرجش على الطريق، وبنطيّر الكاميرا من مكانها للهدف.
+    const jumpTo = (i: number) => {
+      const next = gsap.utils.clamp(0, segs, i);
+      if (next === idx && !jumping) return;
+      idx = next;
+
+      // الحدود بتتاخد من ScrollTrigger نفسه مش من offsetTop/offsetHeight:
+      // بعد التحميل الأبعاد بتتغير مع تحميل الخطوط، وScrollTrigger بيعيد
+      // حساب start/end عند الـrefresh فبيفضلوا مظبوطين.
+      const sc = tl.scrollTrigger!;
+      const y = sc.start + (sc.end - sc.start) * (idx / segs);
+      jumping = true;
+
       const lenis = (window as any).__lenis;
-      if (lenis) lenis.scrollTo(y, { duration: 1.5 });
-      else scrollTo({ top: y, behavior: 'smooth' });
+      if (lenis) lenis.scrollTo(y, { immediate: true });
+      else scrollTo({ top: y, behavior: 'auto' });
+
+      // التايم لاين يتظبط على الهدف فورًا، فأي سكرول بعد كده يكمّل من هناك
+      prog.p = idx / segs;
+      tl.progress(idx / segs);
+      setCurrent(idx);
+      barFill.style.width = `${(idx / segs) * 100}%`;
+
+      gsap.killTweensOf(cam);
+      gsap.to(cam, {
+        tx: waypoints[idx].tx, ty: waypoints[idx].ty, tz: waypoints[idx].tz,
+        d: waypoints[idx].d, rx: waypoints[idx].rx, ry: waypoints[idx].ry,
+        duration: 1.5, ease: 'power3.inOut',
+        onUpdate: applyCamera,
+        onComplete: () => { jumping = false; },
+      });
     };
 
-    buttons.forEach((b) => b.addEventListener('click', () => goTo(Number(b.dataset.go) + 1)));
-    cards.forEach((c, i) => c.addEventListener('click', () => goTo(i + 2)));
-
+    buttons.forEach((b) => b.addEventListener('click', () => jumpTo(Number(b.dataset.go))));
+    items.forEach((c) => c.el.addEventListener('click', () => jumpTo(c.sec + 2)));
     addEventListener('keydown', (e) => {
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
       e.preventDefault();
-      goTo(idx + (e.key === 'ArrowRight' ? 1 : -1));
+      jumpTo(idx + (e.key === 'ArrowRight' ? 1 : -1));
     });
+
+    // لو المستخدم عمل سكرول بنفسه، بنلغي القفزة ونرجّع السكرول هو المتحكم
+    addEventListener('wheel', () => {
+      if (!jumping) return;
+      jumping = false;
+      gsap.killTweensOf(cam);
+    }, { passive: true });
+
     ScrollTrigger.create({
       trigger: '.stage', start: 'top top', end: 'bottom bottom',
-      onUpdate: (self) => { idx = Math.round(self.progress * segs); },
+      onUpdate: (self) => { if (!jumping) idx = Math.round(self.progress * segs); },
+    });
+
+    // تغيير مقاس النافذة بيغيّر كل الأطوال وطول المسرح، فنفس موضع السكرول
+    // بيبقى يساوي لقطة تانية. بنعيد الحساب وبنرجّع المستخدم لنفس اللقطة.
+    let rT: number;
+    addEventListener('resize', () => {
+      clearTimeout(rT);
+      rT = window.setTimeout(() => {
+        const keep = idx;
+        layout();
+        ScrollTrigger.refresh();
+        const sc = tl.scrollTrigger!;
+        const y = sc.start + (sc.end - sc.start) * (keep / segs);
+        const lenis = (window as any).__lenis;
+        if (lenis) lenis.scrollTo(y, { immediate: true });
+        else scrollTo({ top: y, behavior: 'auto' });
+        prog.p = keep / segs;
+        tl.progress(keep / segs);
+        idx = keep;
+        Object.assign(cam, waypoints[keep]);
+        applyCamera();
+      }, 180);
     });
   }
 

@@ -1,0 +1,53 @@
+/* Mohamed — Portfolio Design Tokens
+   مبني على الباليت المرسلة. القاعدة: الأكسنت أقل من 5% من الشاشة. */
+
+:root {
+  /* ===== Surfaces (85% من الشاشة) ===== */
+  --ink:        #140F0D;  /* الخلفية الأساسية — أسود دافي مشتق من #3E2723، مش أسود صريح */
+  --surface-1:  #1E1613;  /* كارت / قسم مرفوع شوية */
+  --surface-2:  #3E2723;  /* سطح أعلى: مينيو، modal، hover على الكارت */
+  --line:       #4E342E;  /* برواز وخطوط فاصلة */
+
+  /* ===== Text ===== */
+  --text:       #F5F5F5;  /* النص الأساسي */
+  --text-dim:   #D7CCC8;  /* نص ثانوي */
+  --text-mute:  #8D7E76;  /* credits / timecode — مشتق، نسبة تباين ٤.٥:١ على --ink */
+
+  /* ===== Accent (أقل من 5%) ===== */
+  --accent:       #E65100;  /* الكيرسر، نقطة Available، اللوجو، زر التواصل */
+  --accent-press: #BF360C;  /* الحالة المضغوطة + الـwipe بتاع انتقال الصفحات */
+  --accent-ink:   #140F0D;  /* النص فوق الأكسنت */
+
+  /* ===== Motion ===== */
+  --ease-out:   cubic-bezier(0.16, 1, 0.30, 1);   /* الدخول */
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);   /* الانتقالات */
+  --dur-fast:   .4s;   /* هوفر */
+  --dur-mid:    .8s;   /* دخول عناصر */
+  --dur-slow:   1.2s;  /* انتقال صفحات */
+
+  /* ===== Type ===== */
+  --font-display: 'Cabinet Grotesk', 'General Sans', system-ui, sans-serif;
+  --font-body:    'Geist', system-ui, sans-serif;
+  --font-mono:    'Geist Mono', ui-monospace, monospace;
+  --font-ar:      'IBM Plex Sans Arabic', system-ui, sans-serif;
+
+  /* ===== Spacing (مقياس 4px) ===== */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 16px; --s-4: 24px;
+  --s-5: 40px; --s-6: 64px; --s-7: 104px; --s-8: 168px;
+
+  --radius: 0;  /* كورنرز حادة — مقصودة */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: .01s; --dur-mid: .01s; --dur-slow: .01s; }
+}
+
+/* ===== Type scale (fluid) ===== */
+:root {
+  --t-hero:  clamp(3.5rem, 13vw, 11rem);
+  --t-h1:    clamp(2.5rem, 7vw,  5.5rem);
+  --t-h2:    clamp(1.75rem, 4vw, 3rem);
+  --t-body:  clamp(1rem, 1.1vw, 1.125rem);
+  --t-small: .8125rem;
+  --t-mono:  .75rem;
+}

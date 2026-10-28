@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+.astro/
+
+# environment
+.env
+.env.*
+!.env.example
+
+# macOS
+.DS_Store
+
+# logs
+*-debug.log*
+
+# editor / tooling
+.idea/
+.vscode/
+.claude/
+
+# ملفات الفيديو الكبيرة — دي بتروح على Vimeo أو على الـCDN، مش في الريبو.
+# اللوبات القصيرة بتاعة الجريد (أقل من 1MB) استثناء: دي جزء من الموقع.
+*.mov
+*.mp4
+*.avi
+*.prproj
+*.aep
+!site/public/loops/*.mp4

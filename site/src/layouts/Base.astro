@@ -1,0 +1,85 @@
+---
+import '../styles/global.css';
+interface Props { title: string; }
+const { title } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.fontshare.com" />
+    <!-- مؤقتًا من CDN — قبل الإطلاق هننزّلهم على الموقع نفسه (self-host) عشان السرعة -->
+    <link
+      rel="stylesheet"
+      href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,500&f[]=general-sans@600&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans+Arabic:wght@400;600&display=swap"
+    />
+  </head>
+  <body>
+    <slot />
+    <script>
+      import Lenis from 'lenis';
+      import { gsap } from 'gsap';
+      import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+      gsap.registerPlugin(ScrollTrigger);
+      // SplitText متسطّب وجاهز — هنستورده لما نحتاج تقسيم سطور تلقائي
+
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      if (!reduced) {
+        // Lenis مربوط بـ gsap.ticker — loop واحد بس، مفيش تضارب
+        const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((t) => lenis.raf(t * 1000));
+        gsap.ticker.lagSmoothing(0);
+      }
+
+      // الـeasing الأساسي — نفس القيمة اللي في tokens.css
+      const EASE = 'power4.out';
+      const DUR = reduced ? 0 : 0.8;
+
+      // دخول التايب بالـmask سطر سطر.
+      // الـset مقصودة: GSAP بيقرا translateY(105%) اللي في الـCSS كـ y بالبكسل،
+      // فلو حطينا yPercent فوقه بيتجمعوا والسطر يفضل مخفي. عشان كده بنصفّر y
+      // ونسجّل البداية كـ yPercent بس. وبنستخدم to مش fromTo عشان immediateRender
+      // مايرجّعش العناصر لنقطة البداية مع كل ScrollTrigger.refresh().
+      gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((el) => {
+        const lines = el.querySelectorAll('.line-mask > span');
+        gsap.set(lines, { y: 0, yPercent: 105 });
+        gsap.to(lines, {
+          yPercent: 0,
+          duration: DUR,
+          ease: EASE,
+          stagger: 0.08,
+          scrollTrigger: { trigger: el, start: 'top 85%', once: true },
+        });
+      });
+
+      // stagger لكروت الجريد
+      gsap.utils.toArray<HTMLElement>('[data-stagger]').forEach((grid) => {
+        const items = grid.children;
+        gsap.set(items, { y: reduced ? 0 : 40, opacity: 0 });
+        gsap.to(items, {
+          y: 0,
+          opacity: 1,
+          duration: DUR,
+          ease: EASE,
+          stagger: 0.07,
+          scrollTrigger: { trigger: grid, start: 'top 80%', once: true },
+        });
+      });
+
+      // الخطوط بتغيّر ارتفاعات العناصر — لازم ScrollTrigger يعيد الحساب بعد ما تحمّل
+      document.fonts?.ready.then(() => ScrollTrigger.refresh());
+    </script>
+  </body>
+</html>

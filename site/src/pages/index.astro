@@ -1,213 +1,176 @@
 ---
 import Base from '../layouts/Base.astro';
 
-const swatches = [
-  { role: 'Background — Ink',  hex: '#140F0D', note: 'مشتق من بنّيك، مش أسود صريح', pct: '70%' },
-  { role: 'Surface 1',         hex: '#1E1613', note: 'كارت / قسم مرفوع',            pct: '10%' },
-  { role: 'Surface 2',         hex: '#3E2723', note: 'مينيو، hover — لونك',          pct: '5%'  },
-  { role: 'Line',              hex: '#4E342E', note: 'براويز الجريد — لونك',         pct: '—'   },
-  { role: 'Text',              hex: '#F5F5F5', note: 'لونك',                         pct: '8%'  },
-  { role: 'Text dim',          hex: '#D7CCC8', note: 'لونك',                         pct: '4%'  },
-  { role: 'Text mute',         hex: '#8D7E76', note: 'credits / timecode',           pct: '2%'  },
-  { role: 'Accent',            hex: '#E65100', note: 'لونك — أقل من 3%',             pct: '<3%' },
-  { role: 'Accent pressed',    hex: '#BF360C', note: 'لونك — الـwipe',               pct: '—'   },
+// كل كارت ليه عمق حقيقي (z بالبكسل). الكاميرا بترجع لورا فالكروت
+// بتتقارب ناحية نقطة التلاشي — بالظبط زي dolly out في اللقطة.
+// x/y برّه الشاشة في البداية عشان تدخل الفريم مع رجوع الكاميرا.
+const cards = [
+  { id: 'reel',    label: 'Reel 2026', meta: '01:24',          x: 50,  y: 48,  z: -250,  w: 50, ar: '16 / 9' },
+  { id: 'motion',  label: 'Motion',    meta: '18 projects',    x: -6,  y: 17,  z: -800,  w: 26, ar: '1 / 1'  },
+  { id: 'ai',      label: 'AI',        meta: '06 projects',    x: 108, y: 21,  z: -1150, w: 18, ar: '9 / 16' },
+  { id: 'edit',    label: 'Edit',      meta: '11 projects',    x: -12, y: 86,  z: -1000, w: 30, ar: '16 / 9' },
+  { id: 'about',   label: 'About',     meta: 'Cairo / Riyadh', x: 112, y: 84,  z: -1500, w: 24, ar: '1 / 1'  },
+  { id: 'contact', label: 'Contact',   meta: 'Available',      x: 50,  y: 126, z: -1900, w: 28, ar: '16 / 9' },
 ];
-
-const durations = [
-  { name: 'Fast',   val: '.4s',  use: 'هوفر' },
-  { name: 'Medium', val: '.8s',  use: 'دخول عناصر' },
-  { name: 'Slow',   val: '1.2s', use: 'انتقال صفحات' },
-];
-
-const ratios = [
-  { label: '16:9', ar: '16 / 9', tc: '00:00:04:12' },
-  { label: '1:1',  ar: '1 / 1',  tc: '00:00:02:08' },
-  { label: '9:16', ar: '9 / 16', tc: '00:00:06:21' },
-];
+const FOCAL = -250; // مستوى التركيز في البداية = الـReel
 ---
 
-<Base title="Theme Test — Mohamed">
-  <!-- ===== HERO ===== -->
-  <header class="hero wrap">
-    <div class="status mono"><i></i> Available for work</div>
+<Base title="Camera — Planet Motion">
+  <div class="furniture">
+    <span class="mono tl">Planet<br />Motion</span>
+    <span class="mono tr">Menu</span>
+    <span class="mono bl"><i class="dot"></i> Available</span>
+    <span class="mono br" id="tc">00:00:00:00</span>
+  </div>
 
-    <h1 data-reveal>
-      <span class="line-mask"><span>Video editor</span></span>
-      <span class="line-mask"><span><em>&amp;</em> motion designer</span></span>
-    </h1>
-
-    <p class="sub mono">Cairo / Riyadh — Theme test v1 · Direction A: Warm Cinema</p>
-  </header>
-
-  <!-- ===== COLORS ===== -->
-  <section class="wrap sec">
-    <h2 class="sec-h" data-reveal><span class="line-mask"><span>01 — Color</span></span></h2>
-    <div class="swatches" data-stagger>
-      {swatches.map((s) => (
-        <div class="sw">
-          <div class="chip" style={`background:${s.hex}`}></div>
-          <div class="sw-meta">
-            <strong>{s.role}</strong>
-            <span class="mono">{s.hex} · {s.pct}</span>
-            <span class="note" dir="rtl">{s.note}</span>
+  <section class="stage">
+    <div class="scene">
+      <div class="world" id="world">
+        {cards.map((c) => (
+          <div
+            class="card"
+            id={`c-${c.id}`}
+            data-z={c.z}
+            style={`left:${c.x}%; top:${c.y}%; width:${c.w}%;`}
+          >
+            <div class="thumb" style={`aspect-ratio:${c.ar}`}>
+              <span class="ar mono">{c.ar.replace(/ /g, '')}</span>
+            </div>
+            <div class="meta">
+              <strong>{c.label}</strong>
+              <span class="mono">{c.meta}</span>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  </section>
-
-  <!-- ===== TYPE ===== -->
-  <section class="wrap sec">
-    <h2 class="sec-h" data-reveal><span class="line-mask"><span>02 — Type</span></span></h2>
-    <div class="type-spec" data-stagger>
-      <div class="spec">
-        <span class="mono">Display — Cabinet Grotesk 800</span>
-        <p class="s-hero">Reel 2026</p>
-      </div>
-      <div class="spec">
-        <span class="mono">Editorial accent — Instrument Serif italic</span>
-        <p class="s-serif">selected work</p>
-      </div>
-      <div class="spec">
-        <span class="mono">Body — Geist</span>
-        <p class="s-body">العميل بيقرر في ثواني. أقوى شغل لازم يبان فورًا من غير أي احتكاك — ده الفرق بين موقع حلو وموقع ياخد جوايز.</p>
-      </div>
-      <div class="spec">
-        <span class="mono">Arabic — IBM Plex Sans Arabic</span>
-        <p class="s-body ar">مونتير فيديو ومصمم موشن — القاهرة / الرياض</p>
-      </div>
-      <div class="spec">
-        <span class="mono">Credits — Geist Mono</span>
-        <p class="s-mono">CLIENT: ——— · ROLE: LEAD ANIMATOR · 2026 · AE / PR</p>
+        ))}
       </div>
     </div>
+
+    <div class="hint mono" id="hint">Scroll — camera pulls back</div>
   </section>
 
-  <!-- ===== MOTION ===== -->
-  <section class="wrap sec">
-    <h2 class="sec-h" data-reveal><span class="line-mask"><span>03 — Motion</span></span></h2>
-    <p class="lede" dir="rtl">عدّي بالماوس على الكروت — كل واحد بمدة مختلفة. حِس الفرق واختار الإيقاع.</p>
-    <div class="durs" data-stagger>
-      {durations.map((d) => (
-        <div class="dur" style={`--d:${d.val}`}>
-          <strong>{d.name}</strong>
-          <span class="mono"><span dir="ltr">{d.val}</span> · <span dir="rtl">{d.use}</span></span>
-          <div class="bar"><i></i></div>
-        </div>
-      ))}
-    </div>
-    <p class="mono ease-note">ease: cubic-bezier(0.16, 1, 0.30, 1) — expo-out</p>
+  <section class="after wrap">
+    <h2 data-reveal><span class="line-mask"><span>Selected work</span></span></h2>
+    <p class="lede" dir="rtl">الصفحة بتكمّل طبيعي بعد ما الكاميرا توقف.</p>
   </section>
-
-  <!-- ===== GRID ===== -->
-  <section class="wrap sec">
-    <h2 class="sec-h" data-reveal><span class="line-mask"><span>04 — Work grid</span></span></h2>
-    <p class="lede" dir="rtl">جريد قايم على نسب الفيديو، كورنرز حادة، وtimecode — ده الشكل اللي مايبانش معمول بـAI.</p>
-    <div class="grid" data-stagger>
-      {ratios.map((r) => (
-        <article class="card">
-          <div class="thumb" style={`aspect-ratio:${r.ar}`}>
-            <span class="tc mono">{r.tc}</span>
-            <span class="ratio mono">{r.label}</span>
-            <span class="play mono">Play</span>
-          </div>
-          <div class="card-meta">
-            <strong>Project title</strong>
-            <span class="mono">Client · Lead animator · 2026</span>
-          </div>
-        </article>
-      ))}
-    </div>
-  </section>
-
-  <!-- ===== FOOTER ===== -->
-  <footer class="wrap sec foot">
-    <h2 class="big" data-reveal><span class="line-mask"><span>Let's talk</span></span></h2>
-    <a class="btn" href="#">Contact</a>
-  </footer>
 </Base>
 
 <style>
-  /* ===== HERO ===== */
-  .hero { padding: var(--s-8) 0 var(--s-7); }
-  .status { display: flex; align-items: center; gap: var(--s-2); margin-bottom: var(--s-5); }
-  .status i {
-    width: 7px; height: 7px; background: var(--accent);
-    border-radius: 50%; animation: pulse 2.4s infinite;
+  .furniture { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
+  .furniture span { position: absolute; }
+  .tl { top: var(--s-4); left: var(--s-4); line-height: 1.3; color: var(--text); }
+  .tr { top: var(--s-4); right: var(--s-4); }
+  .bl { bottom: var(--s-4); left: var(--s-4); display: flex; align-items: center; gap: var(--s-2); }
+  .br { bottom: var(--s-4); right: var(--s-4); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2.4s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+
+  /* المسرح: شاشتين سكرول للحركة كلها */
+  .stage { height: 260vh; position: relative; }
+
+  /* نقطة التلاشي. ده اللي بيخلي العمق حقيقي مش تكبير. */
+  .scene {
+    position: sticky; top: 0; height: 100vh;
+    perspective: 1200px;
+    perspective-origin: 50% 46%;
+    overflow: hidden;
   }
-  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
+  .world { position: absolute; inset: 0; transform-style: preserve-3d; }
 
-  h1 { font-size: var(--t-hero); }
-  h1 em { font-family: var(--font-display); font-style: normal; color: var(--accent); }
-  .sub { margin-top: var(--s-4); }
-
-  /* ===== SECTIONS ===== */
-  .sec { padding-block: var(--s-7); border-top: 1px solid var(--line); }
-  .sec-h { font-size: var(--t-h2); margin-bottom: var(--s-5); }
-  .lede { color: var(--text-dim); max-width: 60ch; text-align: start; margin: calc(var(--s-4) * -1) 0 var(--s-5); }
-
-  /* ===== COLORS ===== */
-  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--s-3); }
-  .sw { border: 1px solid var(--line); }
-  .chip { height: 110px; }
-  .sw-meta { padding: var(--s-3); display: grid; gap: 4px; background: var(--surface-1); }
-  .sw-meta strong { font-size: var(--t-small); }
-  .note { font-size: var(--t-small); color: var(--text-dim); }
-
-  /* ===== TYPE ===== */
-  .type-spec { display: grid; gap: var(--s-6); }
-  .spec { display: grid; gap: var(--s-2); padding-top: var(--s-3); border-top: 1px solid var(--line); }
-  .s-hero  { font-family: var(--font-display); font-size: var(--t-h1); line-height: .9; letter-spacing: -.04em; margin: 0; }
-  .s-serif { font-family: 'Instrument Serif', serif; font-style: italic; font-size: var(--t-h1); line-height: 1; margin: 0; color: var(--text-dim); }
-  .s-body  { max-width: 60ch; margin: 0; }
-  .s-body.ar { font-family: var(--font-ar); direction: rtl; font-size: 1.25rem; }
-  .s-mono  { font-family: var(--font-mono); font-size: .875rem; letter-spacing: .06em; color: var(--text-mute); margin: 0; }
-
-  /* ===== MOTION ===== */
-  .durs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--s-3); }
-  .dur {
-    padding: var(--s-4); border: 1px solid var(--line); background: var(--surface-1);
-    display: grid; gap: var(--s-2); cursor: pointer;
-    transition: background var(--d) var(--ease-out), transform var(--d) var(--ease-out);
-  }
-  .dur:hover { background: var(--surface-2); transform: translateY(-6px); }
-  .bar { height: 2px; background: var(--line); margin-top: var(--s-2); }
-  .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width var(--d) var(--ease-out); }
-  .dur:hover .bar i { width: 100%; }
-  .ease-note { margin-top: var(--s-4); }
-
-  /* ===== GRID ===== */
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--s-3); align-items: start; }
-  .card { cursor: pointer; }
+  .card { position: absolute; will-change: transform, filter; }
   .thumb {
     position: relative; background: var(--surface-1);
-    border: 1px solid var(--line); overflow: hidden;
-    transition: border-color var(--dur-fast) var(--ease-out);
+    border: 1px solid var(--line);
   }
-  .card:hover .thumb { border-color: var(--accent); }
-  .tc    { position: absolute; top: var(--s-2);    left: var(--s-2); }
-  .ratio { position: absolute; bottom: var(--s-2); left: var(--s-2); }
-  .play {
-    position: absolute; inset: 0; display: grid; place-content: center;
-    color: var(--accent); opacity: 0; letter-spacing: .2em;
-    transition: opacity var(--dur-fast) var(--ease-out);
+  /* لمعة خفيفة على حرف الكارت — بتساعد العين تقرا العمق */
+  .thumb::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(245,245,245,.05), transparent 45%);
+    pointer-events: none;
   }
-  .card:hover .play { opacity: 1; }
-  .card-meta { display: grid; gap: 4px; padding-top: var(--s-3); }
+  .ar { position: absolute; left: 7px; bottom: 6px; font-size: 10px; }
+  .meta { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-2); padding-top: 9px; }
+  .meta strong { font-family: var(--font-display); font-size: 1rem; letter-spacing: -.01em; }
+  .meta .mono { font-size: 10px; }
 
-  /* ===== FOOTER ===== */
-  .foot { padding-block: var(--s-8); }
-  .big { font-size: var(--t-hero); }
-  .btn {
-    display: inline-block; margin-top: var(--s-5);
-    padding: var(--s-3) var(--s-5); background: var(--accent); color: var(--accent-ink);
-    text-decoration: none; font-weight: 600; letter-spacing: .02em;
-    transition: background var(--dur-fast) var(--ease-out);
+  .hint {
+    position: absolute; bottom: var(--s-6); left: 50%; transform: translateX(-50%);
+    z-index: 20;
   }
-  .btn:hover { background: var(--accent-press); color: var(--text); }
 
-  @media (max-width: 640px) {
-    .hero { padding-top: var(--s-7); }
-    .wrap { width: min(1440px, 100% - var(--s-3) * 2); }
+  .after { padding-block: var(--s-8); border-top: 1px solid var(--line); }
+  .after h2 { font-size: var(--t-h1); }
+  .lede { color: var(--text-dim); max-width: 60ch; text-align: start; margin-top: var(--s-4); }
+
+  @media (max-width: 760px) {
+    .stage { height: 220vh; }
+    .scene { perspective: 760px; }
+    .meta strong { font-size: .8rem; }
   }
 </style>
+
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  gsap.registerPlugin(ScrollTrigger);
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const world = document.querySelector<HTMLElement>('#world')!;
+  const cards = gsap.utils.toArray<HTMLElement>('.card');
+  const hint = document.querySelector<HTMLElement>('#hint')!;
+
+  const FOCAL = -250;
+  // على الشاشة الضيقة الكارت بيملا الشاشة بالكامل عند نفس قيمة الكاميرا،
+  // فالفريم الأول بيبقى مساحة لون من غير معنى. بنرجّع الكاميرا لورا شوية.
+  const narrow = innerWidth < 760;
+  const CAM_START = narrow ? 430 : 850;  // الكاميرا جوّه المشهد، قريبة على الـReel
+  const CAM_END = narrow ? -60 : -120;   // رجعت لورا، المشهد كله باين
+
+  // التمركز بـGSAP مش CSS: لو حطينا translate(-50%,-50%) في الـCSS،
+  // GSAP بيقراها كبكسل وبتتجمع مع أي x/y بنحركه.
+  gsap.set(cards, { xPercent: -50, yPercent: -50 });
+  cards.forEach((c) => gsap.set(c, { z: Number(c.dataset.z) }));
+
+  // التمويه بيتحسب من بُعد الكارت عن مستوى التركيز.
+  // في البداية الـReel بس هو الحاد؛ مع رجوع الكاميرا كله بيوضح (rack focus).
+  const blurStart = (z: number) => Math.min(Math.abs(z - FOCAL) / (narrow ? 420 : 300), narrow ? 5 : 8);
+  const blurEnd = (z: number) => Math.min(Math.abs(z - FOCAL) / 1600, 1.4);
+
+  if (reduced) {
+    gsap.set(world, { z: CAM_END });
+    gsap.set(hint, { opacity: 0 });
+  } else {
+    gsap.set(world, { z: CAM_START, rotateY: 1.6, rotateX: -0.8 });
+    cards.forEach((c) => gsap.set(c, { filter: `blur(${blurStart(Number(c.dataset.z))}px)` }));
+
+    const tl = gsap.timeline({
+      scrollTrigger: { trigger: '.stage', start: 'top top', end: '+=180%', scrub: 1 },
+    });
+
+    // الكاميرا: dolly out + تسوية الميل. ease واحد على الحركة كلها
+    // عشان الإحساس يبقى حركة واحدة مش حركات متفرقة.
+    tl.to(world, { z: CAM_END, rotateY: 0, rotateX: 0, ease: 'power1.inOut', duration: 1 }, 0);
+
+    // Rack focus — بيخلص قبل الكاميرا شوية فالمشهد يستقر واضح
+    cards.forEach((c) => {
+      tl.to(
+        c,
+        { filter: `blur(${blurEnd(Number(c.dataset.z))}px)`, ease: 'power2.out', duration: 0.75 },
+        0.08,
+      );
+    });
+
+    tl.to(hint, { opacity: 0, duration: 0.12, ease: 'none' }, 0);
+  }
+
+  const tc = document.querySelector<HTMLElement>('#tc')!;
+  const pad = (n: number) => String(Math.floor(n)).padStart(2, '0');
+  ScrollTrigger.create({
+    trigger: document.body,
+    start: 'top top',
+    end: 'bottom bottom',
+    onUpdate: (self) => {
+      const t = self.progress * 84;
+      tc.textContent = `00:${pad(t / 60)}:${pad(t % 60)}:${pad((t * 25) % 25)}`;
+    },
+  });
+</script>

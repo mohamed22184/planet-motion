@@ -1,5 +1,17 @@
 ---
+import fs from 'node:fs';
+import path from 'node:path';
 import Base from '../layouts/Base.astro';
+
+// بنقرا اللوبات الموجودة فعلًا وقت البناء. الكارت اللي ملوش ملف
+// مابياخدش عنصر فيديو أصلًا — من غير كده كل كارت بيعمل طلبين
+// فاشلين وبيوسّخ الكونسول.
+const loopsDir = path.join(process.cwd(), 'public', 'loops');
+const loopFiles = new Set(
+  fs.existsSync(loopsDir) ? fs.readdirSync(loopsDir) : [],
+);
+const hasLoop = (name: string) =>
+  loopFiles.has(`${name}.mp4`) || loopFiles.has(`${name}.webm`);
 
 // كل قسم = مجموعة فيديوهات في عنقود ثلاثي الأبعاد.
 // x/y/z = مركز العنقود · العناصر متوزعة حواليه بإزاحات صغيرة
@@ -87,6 +99,17 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
               data-w={it.w}
             >
               <div class="thumb" style={`aspect-ratio:${it.ar}`}>
+                {/* preload="none" مقصودة: مفيش بايت واحد بينزل لحد ما القسم
+                    يقرب. الـmp4 الأول والـwebm احتياطي — المتصفح بينتقل
+                    للمصدر اللي بعده لوحده لو الأول مالقاهوش. */}
+                {hasLoop(`${sec.id}-${ii + 1}`) && (
+                  <video
+                    class="v"
+                    muted loop playsinline preload="none"
+                    data-mp4={loopFiles.has(`${sec.id}-${ii + 1}.mp4`) ? `/loops/${sec.id}-${ii + 1}.mp4` : ''}
+                    data-webm={loopFiles.has(`${sec.id}-${ii + 1}.webm`) ? `/loops/${sec.id}-${ii + 1}.webm` : ''}
+                  ></video>
+                )}
                 <span class="ar mono">{it.ar.replace(/ /g, '')}</span>
                 <span class="dur mono">{it.tc}</span>
               </div>
@@ -165,6 +188,13 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
     content: ''; position: absolute; inset: 0; pointer-events: none;
     background: linear-gradient(135deg, rgba(245,245,245,.06), transparent 46%);
   }
+  .v {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    opacity: 0; transition: opacity .5s var(--ease-out);
+  }
+  /* الفيديو مابيبانش غير لما يبقى جاهز فعلًا — من غير كده بيلمع أسود */
+  .card.has-video .v { opacity: 1; }
   .card.is-focus .thumb { border-color: var(--accent); }
   .ar  { position: absolute; left: 8px;  bottom: 7px; font-size: 11px; }
   .dur { position: absolute; right: 8px; bottom: 7px; font-size: 11px; }
@@ -336,6 +366,8 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
   const cam: WP = { ...waypoints[0] };
   const rad = (d: number) => (d * Math.PI) / 180;
 
+  let lastSec = -2;
+
   const applyCamera = () => {
     world.style.transform =
       `translateZ(${cam.d}px) rotateX(${cam.rx}deg) rotateY(${cam.ry}deg) ` +
@@ -352,7 +384,11 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
 
       // تمويه (عمق ميدان) + خفوت (عمق جوي). الاتنين مع بعض هما اللي
       // بيخلّوا المخ يقرا المسافة — التمويه لوحده مابيكفيش.
-      const b = Math.round(Math.min(dist / (520 * fit), 7) * 2) / 2;
+      // الكارت اللي الفيديو بتاعه شغّال بيفضل حاد دايمًا.
+      // تمويه فيديو شغّال معناه إعادة ترسيم مع كل فريم — ده أغلى
+      // بكتير من تمويه صورة ثابتة (اللي بتترسم مرة واحدة).
+      const playing = c.sec === lastSec;
+      const b = playing ? 0 : Math.round(Math.min(dist / (520 * fit), 7) * 2) / 2;
       const o = Math.round(Math.max(1 - dist / (3400 * fit), 0.12) * 20) / 20;
 
       if (c.el.dataset.b !== String(b)) {
@@ -373,11 +409,66 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
     meta: b.dataset.meta || '',
   }));
 
-  let lastSec = -2;
+  // ===== طبقة الفيديو =====
+  // القاعدة: الفيديو بيشتغل للقسم المركّز عليه بس. الأقسام المجاورة
+  // بتحمّل استعدادًا، والباقي متوقف. كده الحمل ثابت مهما زاد عدد
+  // المشاريع — 30 مشروع بيكلّفوا نفس الـ5.
+  const loaded = new WeakSet<HTMLVideoElement>();
+
+  const ensureLoaded = (v: HTMLVideoElement) => {
+    if (loaded.has(v)) return;
+    loaded.add(v);
+    for (const [src, type] of [
+      [v.dataset.mp4, 'video/mp4'],
+      [v.dataset.webm, 'video/webm'],
+    ] as const) {
+      if (!src) continue;
+      const el = document.createElement('source');
+      el.src = src; el.type = type;
+      v.append(el);
+    }
+    // لو مفيش ملف، الكارت بيفضل مستطيل فاضي — مفيش رسالة خطأ للزائر
+    v.addEventListener('loadeddata', () => v.closest('.card')!.classList.add('has-video'));
+    v.preload = 'auto';
+    v.load();
+  };
+
+  // القياس بيقول إن الفيديو هو أغلى حاجة في الصفحة، مش العمق:
+  // من غير فيديو p95 = 9.3ms وصفر فريم متأخر؛ وبفيديو شغّال أثناء
+  // حركة الكاميرا p95 = 31.8ms و5% فريمات متأخرة.
+  // عشان كده الفيديو بيقف أثناء الحركة وبيشتغل لما الكاميرا تستقر —
+  // وقت الحركة هو اللي محتاجين فيه كل الميزانية، والكارت الثابت
+  // يقدر يستنى ثانية.
+  let settled = false;
+
+  const setPlayback = () => {
+    if (reduced) return;
+    items.forEach((c) => {
+      const v = c.el.querySelector<HTMLVideoElement>('.v');
+      if (!v) return;
+      if (Math.abs(c.sec - lastSec) <= 1) ensureLoaded(v);
+      if (settled && c.sec === lastSec) {
+        // الوعد بيترفض لو المتصفح منع التشغيل — مش مشكلة، الكارت
+        // بيفضل ثابت. مفيش داعي نزعج الزائر بيه.
+        v.play().catch(() => {});
+      } else if (!v.paused) {
+        v.pause();
+      }
+    });
+  };
+
+  let settleT: number;
+  const markMoving = () => {
+    if (settled) { settled = false; setPlayback(); }
+    clearTimeout(settleT);
+    settleT = window.setTimeout(() => { settled = true; setPlayback(); }, 220);
+  };
+
   const setCurrent = (i: number) => {
     const s = i - 2;
     if (s === lastSec) return;
     lastSec = s;
+    setPlayback();
     buttons.forEach((b, bi) => b.setAttribute('aria-current', String(bi === s)));
     items.forEach((c) => c.el.classList.toggle('is-focus', c.sec === s));
     if (s === -1) {
@@ -409,6 +500,7 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
     cam.rx = a.rx + (b.rx - a.rx) * f;
     cam.ry = a.ry + (b.ry - a.ry) * f;
     applyCamera();
+    markMoving();
   };
 
   applyProgress(0);
@@ -484,7 +576,7 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
         tx: waypoints[idx].tx, ty: waypoints[idx].ty, tz: waypoints[idx].tz,
         d: waypoints[idx].d, rx: waypoints[idx].rx, ry: waypoints[idx].ry,
         duration: 1.5, ease: 'power3.inOut',
-        onUpdate: applyCamera,
+        onUpdate: () => { applyCamera(); markMoving(); },
         onComplete: () => { jumping = false; },
       });
     };

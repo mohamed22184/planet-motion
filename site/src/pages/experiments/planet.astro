@@ -1,0 +1,266 @@
+---
+import Base from '../layouts/Base.astro';
+
+// كل تايل: موقعه النهائي حوالين الكوكب (% من الحاوية).
+// التجميع بيحسب نقطة البداية لوحده من المتجه بين مركز الكوكب والموقع ده.
+const tiles = [
+  { id: 'reel',    label: 'Reel',    meta: '00:01:24',  x: 22, y: 20, ar: '16 / 9',  w: 30 },
+  { id: 'motion',  label: 'Motion',  meta: '18 projects', x: 80, y: 22, ar: '1 / 1',  w: 17 },
+  { id: 'ai',      label: 'AI',      meta: '06 projects', x: 86, y: 62, ar: '9 / 16', w: 12 },
+  { id: 'edit',    label: 'Edit',    meta: '11 projects', x: 16, y: 62, ar: '1 / 1',  w: 16 },
+  { id: 'about',   label: 'About',   meta: 'Cairo / Riyadh', x: 34, y: 86, ar: '16 / 9', w: 20 },
+  { id: 'contact', label: 'Contact', meta: 'Available',  x: 72, y: 88, ar: '16 / 9', w: 20 },
+];
+---
+
+<Base title="Planet Motion">
+  <!-- ===== الأثاث الثابت على الحواف (من Eszter Bial) ===== -->
+  <div class="furniture">
+    <span class="mono tl">Planet<br />Motion</span>
+    <span class="mono tr">Menu</span>
+    <span class="mono bl"><i class="dot"></i> Available</span>
+    <span class="mono br" id="tc">00:00:00:00</span>
+  </div>
+
+  <!-- ===== التجميع ===== -->
+  <section class="stage" id="stage">
+    <div class="stage-inner">
+      <!-- الكوكب — دلوقتي CSS، وبعدين Lottie من After Effects -->
+      <div class="planet" id="planet">
+        <div class="planet-body">
+          <div class="planet-surface"></div>
+          <div class="planet-shadow"></div>
+        </div>
+        <div class="planet-glow"></div>
+        <div class="planet-ring"></div>
+      </div>
+
+      <!-- التايلز اللي بتترص حوالين الكوكب -->
+      {tiles.map((t) => (
+        <a
+          class="tile"
+          href="#"
+          id={`tile-${t.id}`}
+          style={`left:${t.x}%; top:${t.y}%; width:${t.w}%;`}
+        >
+          <div class="tile-thumb" style={`aspect-ratio:${t.ar}`}>
+            <span class="tile-ar mono">{t.ar.replace(/ /g, '')}</span>
+          </div>
+          <div class="tile-meta">
+            <strong>{t.label}</strong>
+            <span class="mono">{t.meta}</span>
+          </div>
+        </a>
+      ))}
+
+      <!-- الهيرو — بيختفي مع بداية التجميع -->
+      <div class="hero-text" id="heroText">
+        <h1 data-reveal>
+          <span class="line-mask"><span>Planet</span></span>
+          <span class="line-mask"><span><em>Motion</em></span></span>
+        </h1>
+        <p class="mono">Video editor &amp; motion designer — scroll</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== اللي بعد التجميع ===== -->
+  <section class="after wrap">
+    <h2 data-reveal><span class="line-mask"><span>Selected work</span></span></h2>
+    <p class="lede" dir="rtl">
+      بعد ما التجميع يخلص، الموزاييك فوق بيفضل هو النافيجيشن.
+      الجزء ده مجرد إثبات إن الصفحة بتكمّل طبيعي بعد اللحظة الأولى.
+    </p>
+  </section>
+</Base>
+
+<style>
+  /* ===== الأثاث ===== */
+  .furniture { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
+  .furniture span { position: absolute; }
+  .tl { top: var(--s-4); left: var(--s-4); line-height: 1.3; color: var(--text); }
+  .tr { top: var(--s-4); right: var(--s-4); }
+  .bl { bottom: var(--s-4); left: var(--s-4); display: flex; align-items: center; gap: var(--s-2); }
+  .br { bottom: var(--s-4); right: var(--s-4); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2.4s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+
+  /* ===== المسرح ===== */
+  /* 200vh: شاشة للتجميع + شاشة تمرير. الريبورت بيقول متعديش ده. */
+  .stage { height: 200vh; position: relative; }
+  .stage-inner { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+
+  /* ===== الكوكب ===== */
+  .planet {
+    position: absolute; left: 50%; top: 50%;
+    width: clamp(160px, 24vw, 300px); aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    display: grid; place-items: center;
+  }
+  .planet-body {
+    position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
+    background: radial-gradient(circle at 32% 28%, #8A4A28 0%, #5A2E1C 38%, #2A1813 70%, #1A0F0C 100%);
+  }
+  /* شرائط السطح بتتحرك أفقيًا فتدّي إحساس الدوران */
+  .planet-surface {
+    position: absolute; inset: -20%;
+    background: repeating-linear-gradient(
+      98deg,
+      transparent 0 14px,
+      rgba(230, 81, 0, .09) 14px 18px,
+      transparent 18px 34px,
+      rgba(0, 0, 0, .22) 34px 44px
+    );
+    animation: spin 26s linear infinite;
+  }
+  @keyframes spin { to { transform: translateX(-34%); } }
+  /* الظل اللي بيدي الإحساس الكروي */
+  .planet-shadow {
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 26%, transparent 0 40%, rgba(0,0,0,.5) 72%, rgba(0,0,0,.88) 100%);
+  }
+  /* الهالة — نفس لون الأكسنت، دي كل حصة الأكسنت من الشاشة تقريبًا */
+  .planet-glow {
+    position: absolute; inset: -18%; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, rgba(230,81,0,.17) 0%, transparent 62%);
+  }
+  .planet-ring {
+    position: absolute; inset: -9%; border-radius: 50%;
+    border: 1px solid rgba(215, 204, 200, .10);
+  }
+
+  /* ===== التايلز ===== */
+  .tile {
+    position: absolute; text-decoration: none; display: block;
+    width: 20%; min-width: 108px; will-change: transform;
+  }
+  .tile-thumb {
+    position: relative; background: var(--surface-1);
+    border: 1px solid var(--line);
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+  .tile:hover .tile-thumb { border-color: var(--accent); }
+  .tile-ar { position: absolute; left: 6px; bottom: 5px; font-size: 9px; }
+  .tile-meta { display: flex; justify-content: space-between; gap: var(--s-2); padding-top: 7px; }
+  .tile-meta strong { font-size: .8125rem; font-family: var(--font-display); }
+  .tile-meta .mono { font-size: 9px; }
+
+  /* ===== الهيرو ===== */
+  .hero-text {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    text-align: center; z-index: 10; width: max-content; max-width: 90vw;
+  }
+  .hero-text h1 { font-size: clamp(2.6rem, 9vw, 7rem); }
+  .hero-text em { font-style: normal; color: var(--accent); font-family: var(--font-display); }
+  .hero-text p { margin-top: var(--s-3); }
+
+  /* ===== بعد التجميع ===== */
+  .after { padding-block: var(--s-8); border-top: 1px solid var(--line); }
+  .after h2 { font-size: var(--t-h1); }
+  .lede { color: var(--text-dim); max-width: 60ch; text-align: start; margin-top: var(--s-4); }
+
+  /* ===== موبايل =====
+     مهم: GSAP بيمركز كل تايل على الإحداثي بتاعه (xPercent/yPercent -50)،
+     يعني left هنا هو مركز التايل مش حافته الشمال. القيم تحت متحسوبة
+     على الأساس ده عشان مايخرجش برّه الشاشة.
+     الصف الأوسط أضيق عشان يعدّي من جنب الكوكب. */
+  @media (max-width: 760px) {
+    .stage { height: 170vh; }
+    .tile { min-width: 0; }
+
+    #tile-reel    { left: 23% !important; top: 15% !important; width: 38% !important; }
+    #tile-motion  { left: 77% !important; top: 15% !important; width: 38% !important; }
+    #tile-edit    { left: 18% !important; top: 50% !important; width: 30% !important; }
+    #tile-ai      { left: 82% !important; top: 50% !important; width: 30% !important; }
+    #tile-about   { left: 23% !important; top: 85% !important; width: 38% !important; }
+    #tile-contact { left: 77% !important; top: 85% !important; width: 38% !important; }
+
+    .planet { width: 108px; }
+    .planet-glow { inset: -45%; }
+    .tile-meta { flex-direction: column; gap: 2px; }
+  }
+</style>
+
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  gsap.registerPlugin(ScrollTrigger);
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const stage = document.querySelector<HTMLElement>('.stage-inner')!;
+  const tiles = gsap.utils.toArray<HTMLElement>('.tile');
+  const heroText = document.querySelector<HTMLElement>('#heroText')!;
+  const planet = document.querySelector<HTMLElement>('#planet')!;
+
+  // كل تايل بيتمركز على موقعه بـxPercent/yPercent عن طريق GSAP مش CSS،
+  // عشان x/y بالبكسل يفضلوا منفصلين ومايتجمعوش مع ترانسفورم جاي من الـCSS.
+  gsap.set(tiles, { xPercent: -50, yPercent: -50 });
+
+  if (reduced) {
+    gsap.set(heroText, { opacity: 0 });
+  } else {
+    // نقطة البداية لكل تايل: على امتداد الخط من مركز الكوكب لموقعه النهائي،
+    // بس بعيد برّه الشاشة — زي ما يكون داخل من مدار.
+    const build = () => {
+      const r = stage.getBoundingClientRect();
+      const cx = r.width / 2;
+      const cy = r.height / 2;
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.stage',
+          start: 'top top',
+          end: '+=100%',   // التجميع كله في شاشة واحدة
+          scrub: 0.8,
+        },
+      });
+
+      // الهيرو بيسيب مكانه للكوكب
+      tl.to(heroText, { opacity: 0, scale: 0.92, duration: 0.25, ease: 'power2.in' }, 0)
+        .from(planet, { scale: 0.55, opacity: 0.35, duration: 0.6, ease: 'power3.out' }, 0);
+
+      tiles.forEach((tile, i) => {
+        const t = tile.getBoundingClientRect();
+        const tx = t.left + t.width / 2 - r.left;
+        const ty = t.top + t.height / 2 - r.top;
+
+        let vx = tx - cx;
+        let vy = ty - cy;
+        const len = Math.hypot(vx, vy) || 1;
+        // ندفعه برّه الشاشة في نفس الاتجاه
+        const push = (Math.max(r.width, r.height) * 1.15) / len;
+
+        tl.from(
+          tile,
+          {
+            x: vx * push,
+            y: vy * push,
+            rotate: gsap.utils.random(-28, 28, 1),
+            opacity: 0,
+            duration: 0.6,
+            ease: 'power3.out',
+          },
+          0.15 + i * 0.05,
+        );
+      });
+    };
+
+    build();
+    // المواقع متحسوبة بالبكسل، فلازم يتعاد حسابها لما المقاس يتغير
+    ScrollTrigger.addEventListener('refreshInit', () => gsap.set(tiles, { clearProps: 'x,y,rotate' }));
+    window.addEventListener('resize', () => ScrollTrigger.refresh());
+  }
+
+  // عدّاد الـtimecode تحت يمين — بيتحرك مع السكرول زي تايم لاين
+  const tc = document.querySelector<HTMLElement>('#tc')!;
+  const pad = (n: number) => String(Math.floor(n)).padStart(2, '0');
+  ScrollTrigger.create({
+    trigger: document.body,
+    start: 'top top',
+    end: 'bottom bottom',
+    onUpdate: (self) => {
+      const total = self.progress * 90; // 90 ثانية وهمية
+      tc.textContent = `00:${pad(total / 60)}:${pad(total % 60)}:${pad((total * 25) % 25)}`;
+    },
+  });
+</script>

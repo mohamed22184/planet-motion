@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import Base from '../layouts/Base.astro';
+import { sections } from '../data/work';
 
 // بنقرا اللوبات الموجودة فعلًا وقت البناء. الكارت اللي ملوش ملف
 // مابياخدش عنصر فيديو أصلًا — من غير كده كل كارت بيعمل طلبين
@@ -16,56 +17,7 @@ const hasLoop = (name: string) =>
 // كل قسم = مجموعة فيديوهات في عنقود ثلاثي الأبعاد.
 // x/y/z = مركز العنقود · العناصر متوزعة حواليه بإزاحات صغيرة
 // عشان يبقى للعنقود نفسه عمق جوّاه.
-const sections = [
-  {
-    id: 'reel', label: 'Reel 2026', meta: '01:24', d: 470,
-    x: 0, y: 0, z: -250,
-    items: [{ w: 660, ar: '16 / 9', dx: 0, dy: 0, dz: 0, tc: '00:00' }],
-  },
-  {
-    // كل عنقود فيه كارت مسيطر وباقي الكروت أصغر بوضوح — التباين في
-    // المقاس هو اللي بيدي العين نقطة تبدأ منها
-    id: 'motion', label: 'Motion', meta: '05 films', d: 180,
-    x: -1560, y: -700, z: -1200,
-    items: [
-      { w: 470, ar: '16 / 9', dx: -150, dy: -120, dz:  200, tc: '00:42' },
-      { w: 190, ar: '1 / 1',  dx:  250, dy: -175, dz:  -60, tc: '01:10' },
-      { w: 230, ar: '16 / 9', dx:  245, dy:   55, dz:  150, tc: '00:28' },
-      { w: 150, ar: '9 / 16', dx:  -95, dy:  190, dz: -110, tc: '00:55' },
-      { w: 175, ar: '1 / 1',  dx:  165, dy:  235, dz: -260, tc: '02:06' },
-    ],
-  },
-  {
-    id: 'ai', label: 'AI', meta: '04 experiments', d: 190,
-    x: 1580, y: -700, z: -1600,
-    items: [
-      { w: 420, ar: '16 / 9', dx:  110, dy: -110, dz:  180, tc: '00:33' },
-      { w: 165, ar: '9 / 16', dx: -215, dy:  -60, dz:  -40, tc: '00:18' },
-      { w: 185, ar: '1 / 1',  dx:  185, dy:  165, dz:  120, tc: '00:47' },
-      { w: 215, ar: '16 / 9', dx: -170, dy:  195, dz: -200, tc: '01:02' },
-    ],
-  },
-  {
-    id: 'edit', label: 'Edit', meta: '04 cuts', d: 185,
-    x: -1700, y: 620, z: -1000,
-    items: [
-      { w: 450, ar: '16 / 9', dx: -130, dy: -115, dz:  190, tc: '01:35' },
-      { w: 180, ar: '1 / 1',  dx:  235, dy: -145, dz:  -70, tc: '00:51' },
-      { w: 225, ar: '16 / 9', dx:  230, dy:   75, dz:  140, tc: '02:14' },
-      { w: 155, ar: '9 / 16', dx:  -85, dy:  195, dz: -190, tc: '00:39' },
-    ],
-  },
-  {
-    id: 'about', label: 'About', meta: 'Cairo / Riyadh', d: 300,
-    x: 1720, y: 620, z: -2000,
-    items: [{ w: 430, ar: '1 / 1', dx: 0, dy: 0, dz: 0, tc: '—' }],
-  },
-  {
-    id: 'contact', label: 'Contact', meta: "Let's talk", d: 300,
-    x: 0, y: 1250, z: -2400,
-    items: [{ w: 500, ar: '16 / 9', dx: 0, dy: 0, dz: 0, tc: '—' }],
-  },
-];
+
 
 // جزيئات عالقة في الفراغ — مرجع بصري للعمق. البارالاكس بتاعها
 // بييجي من الـperspective لوحده، من غير أي جافاسكريبت.
@@ -80,6 +32,31 @@ const SEGS = sections.length + 1;
 ---
 
 <Base title="Planet Motion">
+  <!-- الفهرس النصي: هو التمثيل المتاح للفراغ الثلاثي.
+       الفراغ نفسه aria-hidden وكروته برّه ترتيب الـTab، عشان مانكررش
+       نفس اللينكات مرتين ومانخلّيش مستخدم الكيبورد يتنقّل بين حاجات
+       مش شايفها. الفهرس مخفي بصريًا لحد ما Tab يوصله. -->
+  <nav class="index" aria-label="All work">
+    <h2 class="index-h mono">Work index</h2>
+    <ul>
+      {sections.map((sec) => (
+        <li>
+          <span class="index-sec mono">{sec.label}</span>
+          <ul>
+            {sec.items.map((it) => (
+              <li>
+                <a href={sec.id === 'about' || sec.id === 'contact' ? `/${sec.id}` : `/work/${it.slug}`}>
+                  {it.title}
+                  <span class="mono">{sec.id === 'about' || sec.id === 'contact' ? '' : `${it.client} · ${it.role}`}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  </nav>
+
   <!-- الفريم: هايرلاين على حدود الشاشة بعلامات قص في الأركان، زي
        علامات الـsafe area. الواجهة كلها بتقعد عليه بدل ما تبقى
        عناصر طايرة في الأركان. -->
@@ -88,7 +65,7 @@ const SEGS = sections.length + 1;
   </div>
 
   <!-- السكرابر هو حافة الفريم العليا نفسها -->
-  <nav class="scrub" id="scrub" aria-label="Timeline">
+  <nav class="scrub" id="scrub" aria-hidden="true">
     <div class="scrub-track" id="scrubTrack">
       <span class="scrub-prog" id="scrubProg"></span>
       {sections.map((sec, i) => (
@@ -110,13 +87,7 @@ const SEGS = sections.length + 1;
     </div>
   </nav>
 
-  <!-- الهوية والتنقّل كلهم على الحافة السفلى — منطقتين بدل أربع أركان -->
-  <div class="foot">
-    <span class="foot-l mono"><i class="dot"></i> Planet Motion<em> · Available</em></span>
-    <span class="foot-r mono"><span id="tc">00:00:00:00</span> <a href="/about">About</a></span>
-  </div>
-
-  <section class="stage">
+  <section class="stage" id="main" tabindex="-1" aria-hidden="true">
     <div class="scene">
       <div class="world" id="world">
         {motes.map((m) => (
@@ -125,16 +96,24 @@ const SEGS = sections.length + 1;
 
         {sections.map((sec, si) =>
           sec.items.map((it, ii) => (
-            <article
+            <a
               class="card"
+              href={sec.id === 'about' || sec.id === 'contact' ? `/${sec.id}` : `/work/${it.slug}`}
               data-sec={si}
               data-x={sec.x + it.dx} data-y={sec.y + it.dy} data-z={sec.z + it.dz}
               data-w={it.w}
+              tabindex="-1"
             >
-              <div class="thumb" style={`aspect-ratio:${it.ar}`}>
-                {/* preload="none" مقصودة: مفيش بايت واحد بينزل لحد ما القسم
-                    يقرب. الـmp4 الأول والـwebm احتياطي — المتصفح بينتقل
-                    للمصدر اللي بعده لوحده لو الأول مالقاهوش. */}
+              {/* transition:name هو اللي بيخلي الكارت يتمدد لهيرو صفحة
+                  المشروع: المتصفح بيعمل المورف بين العنصرين اللي ليهم
+                  نفس الاسم عبر التنقّل */}
+              <div
+                class="thumb"
+                style={`aspect-ratio:${it.ar}`}
+                transition:name={`card-${it.slug}`}
+              >
+                {/* preload="none" مقصودة: مفيش بايت واحد بينزل لحد ما
+                    القسم يقرب. الـmp4 الأول والـwebm احتياطي. */}
                 {hasLoop(`${sec.id}-${ii + 1}`) && (
                   <video
                     class="v"
@@ -146,7 +125,7 @@ const SEGS = sections.length + 1;
                 <span class="ar mono">{it.ar.replace(/ /g, '')}</span>
                 <span class="dur mono">{it.tc}</span>
               </div>
-            </article>
+            </a>
           )),
         )}
       </div>
@@ -156,6 +135,12 @@ const SEGS = sections.length + 1;
     <!-- ===== شريط اللقطات ===== -->
 
   </section>
+
+  <!-- الهوية والتنقّل كلهم على الحافة السفلى — منطقتين بدل أربع أركان -->
+  <div class="foot">
+    <span class="foot-l mono"><i class="dot"></i> Planet Motion<em> · Available</em></span>
+    <span class="foot-r mono"><span id="tc">00:00:00:00</span> <a href="/about">About</a></span>
+  </div>
 
   <section class="after wrap">
     <h2 data-reveal><span class="line-mask"><span>Selected work</span></span></h2>
@@ -273,7 +258,16 @@ const SEGS = sections.length + 1;
     border-radius: 50%; background: var(--text-dim); opacity: .16;
   }
 
-  .card { position: absolute; left: 0; top: 0; will-change: transform, filter, opacity; }
+  .card {
+    position: absolute; left: 0; top: 0; text-decoration: none;
+    will-change: transform, filter, opacity;
+  }
+  /* حلقة التركيز لازم تبان على خلفية داكنة ومن ورا التمويه */
+  .card:focus-visible { outline: none; }
+  .card:focus-visible .thumb {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent), 0 0 0 6px rgba(230, 81, 0, .25);
+  }
   .thumb {
     position: relative; background: var(--surface-1);
     border: 1px solid var(--line);
@@ -719,6 +713,7 @@ const SEGS = sections.length + 1;
         b.addEventListener('click', (e) => { e.stopPropagation(); jumpTo(Number(b.dataset.go)); }),
       );
 
+
       // ===== السحب على المسار =====
       // السحب بيحرّك السكرول مباشرة — يعني بيتصرف زي السكرول بالظبط،
       // بيعدّي على اللقطات اللي في الطريق. ده المقصود من الـscrub.
@@ -756,7 +751,6 @@ const SEGS = sections.length + 1;
       };
       track.addEventListener('pointerup', endScrub, { signal });
       track.addEventListener('pointercancel', endScrub, { signal });
-      items.forEach((c) => c.el.addEventListener('click', () => jumpTo(c.sec + 2)));
       addEventListener('keydown', (e) => {
         if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
         e.preventDefault();

@@ -379,9 +379,9 @@ const SEGS = sections.length + 1;
         (innerHeight / 2) * 0.84 / Math.max(...halfH),
       );
       // الكروت الأقرب بتتكبر أكتر من المركز، فبناخد هامش أمان
-      // 0.86 مش 1: الكروت الأقرب بتتكبر أكتر من المركز، وبارالاكس
-      // الماوس بيلفّ المشهد لحد 4.5 درجة — الهامش بيحسب للاتنين
-      const d = P * (1 - 1 / (need * 0.86));
+      // 0.82 مش 1: الكروت الأقرب بتتكبر أكتر من المركز، وبارالاكس
+      // الماوس بيلفّ المشهد — الهامش بيحسب للاتنين
+      const d = P * (1 - 1 / (need * 0.82));
       return { tx, ty, tz, d, rx: 0, ry: 0 };
     };
   
@@ -442,16 +442,26 @@ const SEGS = sections.length + 1;
     // البعيدة لوحدها — ده البارالاكس بييجي من المنظور مش من كود.
     const look = { x: 0, y: 0 };
     const lookT = { x: 0, y: 0 };
-    const LOOK_RY = 4.5, LOOK_RX = 3.2;
+    // الزاوية لازم تتقاس بمسافة الكاميرا. زاوية ثابتة بتبقى خفيفة
+    // في اللقطة الواسعة (الكاميرا بعيدة فالإزاحة على الشاشة صغيرة)،
+    // وبتفجّر المشهد عند التركيز على قسم: الدوران بيقرّب الكروت من
+    // مستوى المنظور فالتكبير بيطلع لأرقام خيالية وتطير برّه الفريم.
+    const LOOK_RY = 6, LOOK_RX = 4.2;
+    const lookAmp = () => {
+      const P = 900 * fit;
+      const sc = P / (P - cam.d);                 // تكبير الهدف الحالي
+      return gsap.utils.clamp(0.4, 1.8, 1 / sc);  // قريب = أقل، بعيد = أكتر
+    };
 
     const applyCamera = () => {
       // الانجراف البطيء بيمنع المشهد إنه يتجمّد تمامًا لما الزائر يقف
       const t = performance.now();
-      const dy = Math.sin(t * 0.00011) * 0.55;
-      const dx = Math.cos(t * 0.00009) * 0.4;
+      const dy = Math.sin(t * 0.00011) * 1.1;
+      const dx = Math.cos(t * 0.00009) * 0.8;
 
-      const ry = cam.ry + look.x * LOOK_RY + dy;
-      const rx = cam.rx - look.y * LOOK_RX + dx;
+      const amp = lookAmp();
+      const ry = cam.ry + look.x * LOOK_RY * amp + dy;
+      const rx = cam.rx - look.y * LOOK_RX * amp + dx;
 
       world.style.transform =
         `translateZ(${cam.d}px) rotateX(${rx}deg) rotateY(${ry}deg) ` +
@@ -620,8 +630,10 @@ const SEGS = sections.length + 1;
       // التخميد هو اللي بيدي الإحساس بالسلاسة: المشهد بيلحق الماوس
       // بتأخير بدل ما يلزق فيه. 0.055 ≈ نص ثانية عشان يستقر.
       const tick = () => {
-        look.x += (lookT.x - look.x) * 0.055;
-        look.y += (lookT.y - look.y) * 0.055;
+        // تخميد أبطأ = وزن أكتر. المشهد بياخد وقته وهو بيلحق الماوس،
+        // وده اللي بيدي الإحساس بالثقل بدل ما يبقى لازق في الكيرسر.
+        look.x += (lookT.x - look.x) * 0.042;
+        look.y += (lookT.y - look.y) * 0.042;
         applyCamera();
       };
       gsap.ticker.add(tick);

@@ -36,7 +36,9 @@
 | `docs/motion-system.md` | نظام الحركة المعتمد والقياسات والدروس |
 | `site/src/styles/global.css` | reset + الـgrain + كلاس الـmask reveal |
 | `site/src/layouts/Base.astro` | الخطوط + إعداد Lenis و GSAP |
-| `site/src/pages/index.astro` | صفحة اختبار الثيم (مؤقتة — هتتشال لما نبدأ التصميم الحقيقي) |
+| `site/src/pages/index.astro` | الفراغ الثلاثي والكاميرا |
+| `site/src/data/work.ts` | **مصدر واحد للشغل** — الرئيسية وصفحات المشاريع بيتبنوا منه |
+| `site/scripts/check-links.mjs` | بيفشّل البيلد لو فيه لينك داخلي مكسور |
 
 ## لسه ناقص
 

@@ -20,48 +20,50 @@ const sections = [
   {
     id: 'reel', label: 'Reel 2026', meta: '01:24', d: 470,
     x: 0, y: 0, z: -250,
-    items: [{ w: 640, ar: '16 / 9', dx: 0, dy: 0, dz: 0, tc: '00:00' }],
+    items: [{ w: 660, ar: '16 / 9', dx: 0, dy: 0, dz: 0, tc: '00:00' }],
   },
   {
+    // كل عنقود فيه كارت مسيطر وباقي الكروت أصغر بوضوح — التباين في
+    // المقاس هو اللي بيدي العين نقطة تبدأ منها
     id: 'motion', label: 'Motion', meta: '05 films', d: 180,
     x: -1500, y: -620, z: -1300,
     items: [
-      { w: 400, ar: '16 / 9', dx: -300, dy: -170, dz:  160, tc: '00:42' },
-      { w: 300, ar: '1 / 1',  dx:  230, dy: -210, dz:  -90, tc: '01:10' },
-      { w: 340, ar: '16 / 9', dx:  300, dy:  180, dz:  250, tc: '00:28' },
-      { w: 230, ar: '9 / 16', dx: -330, dy:  220, dz: -180, tc: '00:55' },
-      { w: 270, ar: '1 / 1',  dx:  -20, dy:   30, dz: -340, tc: '02:06' },
+      { w: 470, ar: '16 / 9', dx: -150, dy: -120, dz:  200, tc: '00:42' },
+      { w: 190, ar: '1 / 1',  dx:  250, dy: -175, dz:  -60, tc: '01:10' },
+      { w: 230, ar: '16 / 9', dx:  245, dy:   55, dz:  150, tc: '00:28' },
+      { w: 150, ar: '9 / 16', dx:  -95, dy:  190, dz: -110, tc: '00:55' },
+      { w: 175, ar: '1 / 1',  dx:  165, dy:  235, dz: -260, tc: '02:06' },
     ],
   },
   {
     id: 'ai', label: 'AI', meta: '04 experiments', d: 190,
     x: 1560, y: -520, z: -1900,
     items: [
-      { w: 250, ar: '9 / 16', dx: -260, dy: -120, dz:  140, tc: '00:18' },
-      { w: 330, ar: '16 / 9', dx:  240, dy: -180, dz: -120, tc: '00:33' },
-      { w: 290, ar: '1 / 1',  dx:  200, dy:  200, dz:  220, tc: '00:47' },
-      { w: 310, ar: '16 / 9', dx: -230, dy:  210, dz: -200, tc: '01:02' },
+      { w: 420, ar: '16 / 9', dx:  110, dy: -110, dz:  180, tc: '00:33' },
+      { w: 165, ar: '9 / 16', dx: -215, dy:  -60, dz:  -40, tc: '00:18' },
+      { w: 185, ar: '1 / 1',  dx:  185, dy:  165, dz:  120, tc: '00:47' },
+      { w: 215, ar: '16 / 9', dx: -170, dy:  195, dz: -200, tc: '01:02' },
     ],
   },
   {
     id: 'edit', label: 'Edit', meta: '04 cuts', d: 185,
     x: -1400, y: 760, z: -900,
     items: [
-      { w: 380, ar: '16 / 9', dx: -270, dy: -150, dz:  180, tc: '01:35' },
-      { w: 280, ar: '1 / 1',  dx:  250, dy: -170, dz: -140, tc: '00:51' },
-      { w: 340, ar: '16 / 9', dx:  210, dy:  200, dz:  200, tc: '02:14' },
-      { w: 240, ar: '9 / 16', dx: -280, dy:  220, dz: -210, tc: '00:39' },
+      { w: 450, ar: '16 / 9', dx: -130, dy: -115, dz:  190, tc: '01:35' },
+      { w: 180, ar: '1 / 1',  dx:  235, dy: -145, dz:  -70, tc: '00:51' },
+      { w: 225, ar: '16 / 9', dx:  230, dy:   75, dz:  140, tc: '02:14' },
+      { w: 155, ar: '9 / 16', dx:  -85, dy:  195, dz: -190, tc: '00:39' },
     ],
   },
   {
     id: 'about', label: 'About', meta: 'Cairo / Riyadh', d: 300,
     x: 1680, y: 700, z: -2500,
-    items: [{ w: 420, ar: '1 / 1', dx: 0, dy: 0, dz: 0, tc: '—' }],
+    items: [{ w: 430, ar: '1 / 1', dx: 0, dy: 0, dz: 0, tc: '—' }],
   },
   {
     id: 'contact', label: 'Contact', meta: "Let's talk", d: 300,
     x: -200, y: 1400, z: -3100,
-    items: [{ w: 480, ar: '16 / 9', dx: 0, dy: 0, dz: 0, tc: '—' }],
+    items: [{ w: 500, ar: '16 / 9', dx: 0, dy: 0, dz: 0, tc: '—' }],
   },
 ];
 
@@ -78,11 +80,40 @@ const SEGS = sections.length + 1;
 ---
 
 <Base title="Planet Motion">
-  <div class="furniture">
-    <span class="mono tl">Planet<br />Motion</span>
-    <a class="mono tr" href="/about">About</a>
-    <span class="mono bl"><i class="dot"></i> Available</span>
-    <span class="mono br" id="tc">00:00:00:00</span>
+  <!-- الفريم: هايرلاين على حدود الشاشة بعلامات قص في الأركان، زي
+       علامات الـsafe area. الواجهة كلها بتقعد عليه بدل ما تبقى
+       عناصر طايرة في الأركان. -->
+  <div class="frame" aria-hidden="true">
+    <i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i>
+  </div>
+
+  <!-- السكرابر هو حافة الفريم العليا نفسها -->
+  <nav class="scrub" id="scrub" aria-label="Timeline">
+    <div class="scrub-track" id="scrubTrack">
+      <span class="scrub-prog" id="scrubProg"></span>
+      {sections.map((sec, i) => (
+        <button
+          class="scrub-tick"
+          type="button"
+          data-go={i + 2}
+          data-meta={sec.meta}
+          style={`left:${((i + 2) / SEGS) * 100}%`}
+          aria-label={sec.label}
+        ><i></i></button>
+      ))}
+      <span class="scrub-head" id="scrubHead"></span>
+    </div>
+    <div class="scrub-label" id="scrubLabel">
+      <span class="n mono" id="scrubN">01</span>
+      <span class="t" id="scrubT">Reel 2026</span>
+      <span class="m mono" id="scrubM">01:24</span>
+    </div>
+  </nav>
+
+  <!-- الهوية والتنقّل كلهم على الحافة السفلى — منطقتين بدل أربع أركان -->
+  <div class="foot">
+    <span class="foot-l mono"><i class="dot"></i> Planet Motion<em> · Available</em></span>
+    <span class="foot-r mono"><span id="tc">00:00:00:00</span> <a href="/about">About</a></span>
   </div>
 
   <section class="stage">
@@ -123,31 +154,7 @@ const SEGS = sections.length + 1;
     </div>
 
     <!-- ===== شريط اللقطات ===== -->
-    <!-- سكرابر تايم لاين: مسار واحد، علامة لكل لقطة، ورأس تشغيل
-         بيتحرك مع السكرول. ده مش قايمة — ده نفس أداة المونتاج. -->
-    <nav class="scrub" id="scrub" aria-label="Timeline">
-      <div class="scrub-track" id="scrubTrack">
-        <span class="scrub-prog" id="scrubProg"></span>
-        {sections.map((sec, i) => (
-          <button
-            class="scrub-tick"
-            type="button"
-            data-go={i + 2}
-            data-meta={sec.meta}
-            style={`left:${((i + 2) / SEGS) * 100}%`}
-            aria-label={sec.label}
-          ><i></i></button>
-        ))}
-        <span class="scrub-head" id="scrubHead"></span>
-      </div>
-      <div class="scrub-label" id="scrubLabel">
-        <span class="n mono" id="scrubN">01</span>
-        <span class="t" id="scrubT">Reel 2026</span>
-        <span class="m mono" id="scrubM">01:24</span>
-      </div>
-    </nav>
 
-    <div class="hud mono" id="hud">Scroll · click a shot · ← →</div>
   </section>
 
   <section class="after wrap">
@@ -157,14 +164,93 @@ const SEGS = sections.length + 1;
 </Base>
 
 <style>
-  .furniture { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
-  .furniture span, .furniture a { position: absolute; }
-  .furniture a { pointer-events: auto; text-decoration: none; }
-  .tl { top: var(--s-4); left: var(--s-4); line-height: 1.3; color: var(--text); }
-  .tr { top: var(--s-4); right: var(--s-4); }
-  .bl { bottom: var(--s-4); left: var(--s-4); display: flex; align-items: center; gap: var(--s-2); }
-  .br { bottom: var(--s-4); right: var(--s-4); }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2.4s infinite; }
+  /* ===== فريم الكاميرا =====
+     هايرلاين على حدود الشاشة بعلامات قص في الأركان. كل الواجهة
+     بتقعد عليه، فبتقرا كنظام واحد مش عناصر متفرقة. */
+  .frame {
+    position: fixed; inset: var(--fi); z-index: 40; pointer-events: none;
+    border: 1px solid rgba(215, 204, 200, .09);
+  }
+  .frame .c { position: absolute; width: 9px; height: 9px; }
+  .frame .c::before, .frame .c::after {
+    content: ''; position: absolute; background: rgba(215, 204, 200, .3);
+  }
+  .frame .c::before { width: 100%; height: 1px; }
+  .frame .c::after { width: 1px; height: 100%; }
+  .frame .tl { top: -1px; left: -1px; }
+  .frame .tr { top: -1px; right: -1px; }
+  .frame .tr::after { right: 0; }
+  .frame .bl { bottom: -1px; left: -1px; }
+  .frame .bl::before { bottom: 0; }
+  .frame .br { bottom: -1px; right: -1px; }
+  .frame .br::before { bottom: 0; }
+  .frame .br::after { right: 0; }
+
+  /* ===== السكرابر = حافة الفريم العليا ===== */
+  .scrub {
+    position: fixed; z-index: 55;
+    left: var(--fi); right: var(--fi); top: var(--fi);
+  }
+  .scrub-track { position: relative; height: 20px; cursor: ew-resize; touch-action: none; }
+  .scrub-track::before {
+    content: ''; position: absolute; left: 0; right: 0; top: 0;
+    height: 1px; background: rgba(215, 204, 200, .14);
+  }
+  .scrub-prog {
+    position: absolute; left: 0; top: 0; height: 1px; width: 0;
+    background: rgba(215, 204, 200, .32);
+  }
+  .scrub-tick {
+    position: absolute; top: 0; height: 100%; width: 24px;
+    transform: translateX(-50%);
+    border: 0; background: transparent; padding: 0; cursor: pointer;
+    display: flex; justify-content: center; align-items: flex-start;
+  }
+  .scrub-tick i {
+    display: block; width: 1px; height: 6px; background: var(--text-mute);
+    transition: height var(--dur-fast) var(--ease-out),
+                background var(--dur-fast) var(--ease-out);
+  }
+  .scrub-tick:hover i { height: 12px; background: var(--text); }
+  .scrub-tick[aria-current='true'] i { height: 12px; background: var(--text-dim); }
+
+  /* رأس التشغيل — ده المكان الوحيد تقريبًا اللي الأكسنت بيظهر فيه */
+  .scrub-head {
+    position: absolute; top: 0; left: 0; height: 14px; width: 1px;
+    background: var(--accent); pointer-events: none;
+  }
+  .scrub-head::before {
+    content: ''; position: absolute; top: -1px; left: 50%;
+    transform: translateX(-50%);
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid var(--accent);
+  }
+
+  .scrub-label {
+    position: absolute; top: 20px; left: 0;
+    display: flex; align-items: baseline; gap: 8px;
+    white-space: nowrap; transform: translateX(-50%);
+    transition: opacity .3s var(--ease-out);
+  }
+  .scrub-label .n { font-size: 9px; color: var(--accent); }
+  .scrub-label .t { font-family: var(--font-display); font-size: .95rem; letter-spacing: -.02em; }
+  .scrub-label .m { font-size: 9px; color: var(--text-mute); }
+
+  /* ===== الحافة السفلى: الهوية والتنقّل ===== */
+  .foot {
+    position: fixed; z-index: 55; bottom: var(--fi);
+    left: var(--fi); right: var(--fi);
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 7px; pointer-events: none;
+  }
+  .foot span { display: flex; align-items: center; gap: 10px; }
+  .foot em { font-style: normal; }
+  .foot a { pointer-events: auto; text-decoration: none; color: var(--text-dim); }
+  .foot a:hover { color: var(--accent); }
+  .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--accent); animation: pulse 2.4s infinite;
+  }
   @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
 
   .stage { height: 760vh; position: relative; }
@@ -203,79 +289,24 @@ const SEGS = sections.length + 1;
   }
   /* الفيديو مابيبانش غير لما يبقى جاهز فعلًا — من غير كده بيلمع أسود */
   .card.has-video .v { opacity: 1; }
-  .card.is-focus .thumb { border-color: var(--accent); }
+  /* الأكسنت اتشال من براويز الكروت: خمس كروت ببرواز برتقاني مع بعض
+     بتخلي الأكسنت أكتر حاجة في الشاشة، والقاعدة إنه تحت 3%.
+     القسم المركّز عليه بيبان بوضوح البرواز مش بلونه. */
+  .card.is-focus .thumb { border-color: rgba(215, 204, 200, .34); }
+  .card:hover .thumb { border-color: var(--accent); }
   .ar  { position: absolute; left: 8px;  bottom: 7px; font-size: 11px; }
   .dur { position: absolute; right: 8px; bottom: 7px; font-size: 11px; }
-
-  /* ===== سكرابر التايم لاين =====
-     مسار واحد رفيع، علامة لكل لقطة، ورأس تشغيل. مفيش صندوق ولا
-     قايمة — الشكل نفسه هو اللي بيقول إن الصفحة تايم لاين. */
-  .scrub {
-    position: fixed; z-index: 55; left: 50%; top: var(--s-5);
-    transform: translateX(-50%);
-    width: min(620px, 58vw);
-  }
-  .scrub-track {
-    position: relative; height: 22px; cursor: ew-resize;
-    touch-action: none;
-  }
-  /* الخط نفسه رفيع، بس منطقة اللمس أعرض منه بكتير */
-  .scrub-track::before {
-    content: ''; position: absolute; left: 0; right: 0; top: 50%;
-    height: 1px; background: var(--line);
-  }
-  .scrub-prog {
-    position: absolute; left: 0; top: 50%; height: 1px; width: 0;
-    background: var(--text-mute);
-  }
-
-  .scrub-tick {
-    position: absolute; top: 0; height: 100%; width: 22px;
-    transform: translateX(-50%);
-    border: 0; background: transparent; padding: 0; cursor: pointer;
-    display: grid; place-items: center;
-  }
-  .scrub-tick i {
-    display: block; width: 1px; height: 7px; background: var(--text-mute);
-    transition: height var(--dur-fast) var(--ease-out),
-                background var(--dur-fast) var(--ease-out);
-  }
-  .scrub-tick:hover i { height: 13px; background: var(--text); }
-  .scrub-tick[aria-current='true'] i { height: 13px; background: var(--accent); }
-
-  /* رأس التشغيل — نفس شكل الـplayhead في المونتاج */
-  .scrub-head {
-    position: absolute; top: 0; left: 0; height: 100%; width: 2px;
-    background: var(--accent); transform: translateX(-1px);
-    pointer-events: none;
-  }
-  .scrub-head::before {
-    content: ''; position: absolute; top: 0; left: 50%;
-    transform: translateX(-50%);
-    border-left: 4px solid transparent; border-right: 4px solid transparent;
-    border-top: 5px solid var(--accent);
-  }
-
-  /* الاسم بيمشي تحت رأس التشغيل */
-  .scrub-label {
-    position: absolute; top: 26px; left: 0;
-    display: flex; align-items: baseline; gap: 8px;
-    white-space: nowrap; transform: translateX(-50%);
-    transition: opacity .3s var(--ease-out);
-  }
-  .scrub-label .n { font-size: 9px; color: var(--accent); }
-  .scrub-label .t { font-family: var(--font-display); font-size: .95rem; letter-spacing: -.02em; }
-  .scrub-label .m { font-size: 9px; color: var(--text-mute); }
-
-  .hud { position: fixed; left: 50%; bottom: var(--s-5); transform: translateX(-50%); z-index: 20; }
 
   .after { padding-block: var(--s-8); border-top: 1px solid var(--line); }
   .after h2 { font-size: var(--t-h1); }
   .lede { color: var(--text-dim); max-width: 60ch; text-align: start; margin-top: var(--s-4); }
 
   @media (max-width: 760px) {
-    .scrub { width: calc(100vw - 32px); top: var(--s-6); }
     .scrub-label .t { font-size: .8rem; }
+    .scrub-label .m { display: none; }
+    /* النقطة البرتقاني لوحدها بتقول Available — النص بيلفّ على سطرين */
+    .foot { font-size: 9px; }
+    .foot em { display: none; }
   }
 </style>
 
@@ -296,7 +327,6 @@ const SEGS = sections.length + 1;
     const world = document.querySelector<HTMLElement>('#world')!;
     const cards = gsap.utils.toArray<HTMLElement>('.card');
     const motes = gsap.utils.toArray<HTMLElement>('.mote');
-    const hud = document.querySelector<HTMLElement>('#hud')!;
     const track = document.querySelector<HTMLElement>('#scrubTrack')!;
     const prog = document.querySelector<HTMLElement>('#scrubProg')!;
     const head = document.querySelector<HTMLElement>('#scrubHead')!;
@@ -561,7 +591,6 @@ const SEGS = sections.length + 1;
     if (reduced) {
       Object.assign(cam, waypoints[1]);
       applyCamera();
-      gsap.set(hud, { opacity: 0 });
     } else {
       let jumping = false;
       const pos = { p: 0 };
@@ -580,8 +609,7 @@ const SEGS = sections.length + 1;
         onUpdate: () => { if (!jumping) applyProgress(pos.p); },
       });
   
-      tl.to(hud, { opacity: 0, duration: 0.3, ease: 'none' }, 0);
-  
+    
       // المسار نفسه بيفضل ظاهر — هو رفيع كفاية. الاسم بس هو اللي
       // بيخفت مع السكون، فالواجهة تسيب الشغل يتكلم من غير ما تختفي.
       let hideT: number;

@@ -1,0 +1,91 @@
+---
+import Base from '../layouts/Base.astro';
+import { marks } from '../data/marks';
+---
+
+<Base title="Logo marks — Planet Motion">
+  <main class="wrap page" id="main" tabindex="-1">
+    <header>
+      <a class="mono back" href="/">← Planet Motion</a>
+      <h1 data-reveal><span class="line-mask"><span>Logo marks</span></span></h1>
+      <p class="lede" dir="rtl">
+        أربع علامات. كلها بلون واحد وعلى نفس الشبكة.
+        <strong>احكم من عمود 16px</strong> — ده المقاس اللي هيظهر بيه في تاب
+        المتصفح وفي توقيع الإيميل، واللي بيسقّط أي فكرة فيها تفاصيل زيادة.
+      </p>
+    </header>
+
+    {marks.map((m, i) => (
+      <section class="mark">
+        <div class="head">
+          <span class="mono n">{String(i + 1).padStart(2, '0')}</span>
+          <h2>{m.name}</h2>
+        </div>
+
+        <div class="sizes">
+          <div class="big">
+            <svg viewBox="0 0 24 24" set:html={m.svg} aria-hidden="true"></svg>
+          </div>
+          <div class="small">
+            {[48, 32, 16].map((px) => (
+              <figure>
+                <svg viewBox="0 0 24 24" style={`width:${px}px;height:${px}px`} set:html={m.svg} aria-hidden="true"></svg>
+                <figcaption class="mono">{px}px</figcaption>
+              </figure>
+            ))}
+            <figure class="onlight">
+              <svg viewBox="0 0 24 24" style="width:32px;height:32px" set:html={m.svg} aria-hidden="true"></svg>
+              <figcaption class="mono">on light</figcaption>
+            </figure>
+          </div>
+          <div class="lockup">
+            <svg viewBox="0 0 24 24" set:html={m.svg} aria-hidden="true"></svg>
+            <span>Planet<br />Motion</span>
+          </div>
+        </div>
+
+        <div class="notes">
+          <p dir="rtl">{m.idea}</p>
+          <p class="motion mono" dir="rtl">الحركة: {m.motion}</p>
+        </div>
+      </section>
+    ))}
+  </main>
+</Base>
+
+<style>
+  .page { padding-block: var(--s-7) var(--s-8); }
+  .back { text-decoration: none; color: var(--text-dim); }
+  h1 { font-size: var(--t-h1); margin-top: var(--s-4); }
+  .lede { max-width: 56ch; margin: var(--s-4) 0 var(--s-7); color: var(--text-dim); text-align: start; }
+  .lede strong { color: var(--text); font-weight: 400; }
+
+  .mark { padding-block: var(--s-6); border-top: 1px solid var(--line); }
+  .head { display: flex; align-items: baseline; gap: var(--s-3); margin-bottom: var(--s-5); }
+  .head .n { color: var(--accent); }
+  .head h2 { font-size: var(--t-h2); }
+
+  .sizes { display: grid; grid-template-columns: auto 1fr auto; gap: var(--s-6); align-items: center; }
+  .big svg { width: 120px; height: 120px; color: var(--accent); }
+
+  .small { display: flex; align-items: flex-end; gap: var(--s-5); }
+  .small figure { margin: 0; display: grid; justify-items: center; gap: 9px; }
+  .small svg { color: var(--text); }
+  .onlight { background: var(--text); padding: 10px; }
+  .onlight svg { color: var(--ink); }
+  .onlight figcaption { color: var(--ink); }
+
+  .lockup { display: flex; align-items: center; gap: 12px; }
+  .lockup svg { width: 30px; height: 30px; color: var(--accent); }
+  .lockup span { font-family: var(--font-mono); font-size: 11px; line-height: 1.3; letter-spacing: .08em; text-transform: uppercase; }
+
+  .notes { margin-top: var(--s-5); display: grid; gap: var(--s-2); max-width: 70ch; }
+  .notes p { margin: 0; color: var(--text-dim); }
+  .notes .motion { color: var(--text-mute); }
+
+  @media (max-width: 760px) {
+    .sizes { grid-template-columns: 1fr; gap: var(--s-5); }
+    .big svg { width: 84px; height: 84px; }
+    .small { flex-wrap: wrap; gap: var(--s-4); }
+  }
+</style>

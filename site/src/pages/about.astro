@@ -1,0 +1,62 @@
+---
+import Base from '../layouts/Base.astro';
+
+const services = ['Edit', 'Motion design', 'AI workflows', 'Colour', 'Sound'];
+const clients = ['Client one', 'Client two', 'Client three', 'Client four'];
+---
+
+<Base title="About — Planet Motion">
+  <div class="furniture">
+    <a class="mono tl" href="/">Planet<br />Motion</a>
+    <a class="mono tr" href="/">Back</a>
+  </div>
+
+  <main class="wrap page">
+    <h1 data-reveal>
+      <span class="line-mask"><span>Video editor</span></span>
+      <span class="line-mask"><span><em>&amp;</em> motion designer</span></span>
+    </h1>
+
+    <p class="lead">
+      Cairo and Riyadh. I cut film, build motion systems, and finish
+      AI-generated material into work that holds up on a client's timeline.
+    </p>
+
+    <div class="cols" data-stagger>
+      <section>
+        <h2 class="mono">Services</h2>
+        <ul>{services.map((s) => <li>{s}</li>)}</ul>
+      </section>
+      <section>
+        <h2 class="mono">Selected clients</h2>
+        <ul>{clients.map((c) => <li>{c}</li>)}</ul>
+      </section>
+      <section>
+        <h2 class="mono">Contact</h2>
+        <ul>
+          <li><a href="mailto:hello@example.com">hello@example.com</a></li>
+          <li>WhatsApp</li>
+          <li>Download CV</li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .furniture { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+  .furniture a { position: absolute; pointer-events: auto; text-decoration: none; }
+  .tl { top: var(--s-4); left: var(--s-4); line-height: 1.3; color: var(--text); }
+  .tr { top: var(--s-4); right: var(--s-4); }
+
+  .page { padding-block: var(--s-8) var(--s-7); }
+  h1 { font-size: var(--t-h1); }
+  h1 em { font-family: var(--font-display); font-style: normal; color: var(--accent); }
+  .lead { max-width: 54ch; margin: var(--s-5) 0 var(--s-7); color: var(--text-dim); font-size: 1.25rem; }
+
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--s-5); }
+  .cols h2 { font-size: var(--t-mono); margin-bottom: var(--s-3); }
+  .cols ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .cols li { border-top: 1px solid var(--line); padding-top: 8px; }
+  .cols a { color: var(--accent); text-decoration: none; }
+</style>

@@ -110,3 +110,12 @@ html.intro-on { overflow: hidden; }
   content: ''; display: block; height: 100%; width: var(--p, 0%);
   background: var(--text-dim);
 }
+
+/* ===== مسح الانتقال بين الصفحات ===== */
+.wipe {
+  position: fixed; inset: 0; z-index: 9500;
+  background: var(--accent);
+  transform: translateY(100%);
+  pointer-events: none;
+  will-change: transform;
+}

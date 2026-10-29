@@ -73,6 +73,8 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
   z: -(((i * 311) % 3400) + 120),
   s: ((i * 97) % 3) + 1,
 }));
+// نقطة توقف لكل قسم + لقطة الفتح + اللقطة الواسعة
+const SEGS = sections.length + 1;
 ---
 
 <Base title="Planet Motion">
@@ -121,24 +123,29 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
     </div>
 
     <!-- ===== شريط اللقطات ===== -->
-    <nav class="bar" id="bar" aria-label="Shots">
-      <div class="bar-items">
-        {sections.map((s, i) => (
-          <button class="bar-btn" data-go={i + 2} data-meta={s.meta} type="button">
-            <span class="n mono">{String(i + 1).padStart(2, '0')}</span>
-            <span class="t">{s.label}</span>
-            <span class="c mono">{s.items.length}</span>
-          </button>
+    <!-- سكرابر تايم لاين: مسار واحد، علامة لكل لقطة، ورأس تشغيل
+         بيتحرك مع السكرول. ده مش قايمة — ده نفس أداة المونتاج. -->
+    <nav class="scrub" id="scrub" aria-label="Timeline">
+      <div class="scrub-track" id="scrubTrack">
+        <span class="scrub-prog" id="scrubProg"></span>
+        {sections.map((sec, i) => (
+          <button
+            class="scrub-tick"
+            type="button"
+            data-go={i + 2}
+            data-meta={sec.meta}
+            style={`left:${((i + 2) / SEGS) * 100}%`}
+            aria-label={sec.label}
+          ><i></i></button>
         ))}
+        <span class="scrub-head" id="scrubHead"></span>
       </div>
-      <div class="bar-track"><span class="bar-fill" id="barFill"></span></div>
+      <div class="scrub-label" id="scrubLabel">
+        <span class="n mono" id="scrubN">01</span>
+        <span class="t" id="scrubT">Reel 2026</span>
+        <span class="m mono" id="scrubM">01:24</span>
+      </div>
     </nav>
-
-    <!-- عنوان القسم: عنصر ثابت في الواجهة، فمابيتقطعش مع حركة الكاميرا -->
-    <div class="title" id="title" aria-live="polite">
-      <strong id="titleName">Reel 2026</strong>
-      <span class="mono" id="titleMeta">01:24</span>
-    </div>
 
     <div class="hud mono" id="hud">Scroll · click a shot · ← →</div>
   </section>
@@ -199,52 +206,66 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
   .card.is-focus .thumb { border-color: var(--accent); }
   .ar  { position: absolute; left: 8px;  bottom: 7px; font-size: 11px; }
   .dur { position: absolute; right: 8px; bottom: 7px; font-size: 11px; }
-  .title {
-    position: fixed; z-index: 20; left: var(--s-5); bottom: calc(var(--s-5) + 30px);
-    display: flex; align-items: baseline; gap: var(--s-3);
-  }
-  .title strong {
-    font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 3.2rem);
-    letter-spacing: -.03em; line-height: 1;
-  }
-  .title .mono { font-size: 11px; }
 
-  /* ===== شريط اللقطات =====
-     فوق في النص، من غير صندوق ولا شفافية ضبابية — سطر واحد نضيف
-     وتحته خط التقدّم، زي رأس تايم لاين. */
-  .bar {
-    position: fixed; z-index: 55; left: 50%; top: var(--s-4);
+  /* ===== سكرابر التايم لاين =====
+     مسار واحد رفيع، علامة لكل لقطة، ورأس تشغيل. مفيش صندوق ولا
+     قايمة — الشكل نفسه هو اللي بيقول إن الصفحة تايم لاين. */
+  .scrub {
+    position: fixed; z-index: 55; left: 50%; top: var(--s-5);
     transform: translateX(-50%);
-    opacity: 0; transition: opacity .45s var(--ease-out);
+    width: min(620px, 58vw);
   }
-  .bar.is-on { opacity: 1; }
+  .scrub-track {
+    position: relative; height: 22px; cursor: ew-resize;
+    touch-action: none;
+  }
+  /* الخط نفسه رفيع، بس منطقة اللمس أعرض منه بكتير */
+  .scrub-track::before {
+    content: ''; position: absolute; left: 0; right: 0; top: 50%;
+    height: 1px; background: var(--line);
+  }
+  .scrub-prog {
+    position: absolute; left: 0; top: 50%; height: 1px; width: 0;
+    background: var(--text-mute);
+  }
 
-  .bar-items { display: flex; align-items: baseline; }
-  .bar-btn {
-    display: flex; align-items: baseline; gap: 6px;
-    padding: 4px 14px; border: 0; background: transparent;
-    color: var(--text-mute); font: inherit; cursor: pointer;
-    white-space: nowrap;
-    transition: color var(--dur-fast) var(--ease-out);
+  .scrub-tick {
+    position: absolute; top: 0; height: 100%; width: 22px;
+    transform: translateX(-50%);
+    border: 0; background: transparent; padding: 0; cursor: pointer;
+    display: grid; place-items: center;
   }
-  .bar-btn + .bar-btn { box-shadow: inset 1px 0 0 var(--line); }
-  .bar-btn .n { font-size: 9px; opacity: .5; }
-  .bar-btn .t { font-family: var(--font-display); font-size: .82rem; letter-spacing: -.01em; }
-  /* العدّاد رقم صغير مرفوع، مش صندوق — الصندوق كان بيبقى تقيل وسط السطر */
-  .bar-btn .c {
-    font-size: 9px; align-self: flex-start; margin-top: 1px;
-    color: var(--text-mute); opacity: .7;
+  .scrub-tick i {
+    display: block; width: 1px; height: 7px; background: var(--text-mute);
+    transition: height var(--dur-fast) var(--ease-out),
+                background var(--dur-fast) var(--ease-out);
   }
-  .bar-btn:hover { color: var(--text); }
-  .bar-btn[aria-current='true'] { color: var(--text); }
-  .bar-btn[aria-current='true'] .n,
-  .bar-btn[aria-current='true'] .c { color: var(--accent); opacity: 1; }
+  .scrub-tick:hover i { height: 13px; background: var(--text); }
+  .scrub-tick[aria-current='true'] i { height: 13px; background: var(--accent); }
 
-  .bar-track { height: 1px; background: var(--line); position: relative; margin-top: 7px; }
-  .bar-fill {
-    position: absolute; left: 0; top: 0; height: 100%; width: 0;
-    background: var(--accent);
+  /* رأس التشغيل — نفس شكل الـplayhead في المونتاج */
+  .scrub-head {
+    position: absolute; top: 0; left: 0; height: 100%; width: 2px;
+    background: var(--accent); transform: translateX(-1px);
+    pointer-events: none;
   }
+  .scrub-head::before {
+    content: ''; position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%);
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid var(--accent);
+  }
+
+  /* الاسم بيمشي تحت رأس التشغيل */
+  .scrub-label {
+    position: absolute; top: 26px; left: 0;
+    display: flex; align-items: baseline; gap: 8px;
+    white-space: nowrap; transform: translateX(-50%);
+    transition: opacity .3s var(--ease-out);
+  }
+  .scrub-label .n { font-size: 9px; color: var(--accent); }
+  .scrub-label .t { font-family: var(--font-display); font-size: .95rem; letter-spacing: -.02em; }
+  .scrub-label .m { font-size: 9px; color: var(--text-mute); }
 
   .hud { position: fixed; left: 50%; bottom: var(--s-5); transform: translateX(-50%); z-index: 20; }
 
@@ -253,10 +274,8 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
   .lede { color: var(--text-dim); max-width: 60ch; text-align: start; margin-top: var(--s-4); }
 
   @media (max-width: 760px) {
-    .bar { top: var(--s-6); max-width: calc(100vw - 12px); overflow-x: auto; }
-    .bar-btn { padding: 8px 10px; gap: 6px; }
-    .bar-btn .t { font-size: .72rem; }
-    .title { left: var(--s-3); bottom: calc(var(--s-5) + 34px); }
+    .scrub { width: calc(100vw - 32px); top: var(--s-6); }
+    .scrub-label .t { font-size: .8rem; }
   }
 </style>
 
@@ -278,9 +297,11 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
     const cards = gsap.utils.toArray<HTMLElement>('.card');
     const motes = gsap.utils.toArray<HTMLElement>('.mote');
     const hud = document.querySelector<HTMLElement>('#hud')!;
-    const bar = document.querySelector<HTMLElement>('#bar')!;
-    const barFill = document.querySelector<HTMLElement>('#barFill')!;
-    const buttons = gsap.utils.toArray<HTMLButtonElement>('.bar-btn');
+    const track = document.querySelector<HTMLElement>('#scrubTrack')!;
+    const prog = document.querySelector<HTMLElement>('#scrubProg')!;
+    const head = document.querySelector<HTMLElement>('#scrubHead')!;
+    const label = document.querySelector<HTMLElement>('#scrubLabel')!;
+    const ticks = gsap.utils.toArray<HTMLButtonElement>('.scrub-tick');
   
     // التقريب = perspective / (perspective - d). عشان نفس التكوين يظهر
     // على أي مقاس، لازم كل الأطوال تتقاس بنفس النسبة — المواقع والعروض
@@ -414,10 +435,11 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
       });
     };
   
-    const titleName = document.querySelector<HTMLElement>('#titleName')!;
-    const titleMeta = document.querySelector<HTMLElement>('#titleMeta')!;
-    const labels = buttons.map((b) => ({
-      name: b.querySelector('.t')!.textContent!,
+    const nEl = document.querySelector<HTMLElement>('#scrubN')!;
+    const tEl = document.querySelector<HTMLElement>('#scrubT')!;
+    const mEl = document.querySelector<HTMLElement>('#scrubM')!;
+    const labels = ticks.map((b) => ({
+      name: b.getAttribute('aria-label') || '',
       meta: b.dataset.meta || '',
     }));
   
@@ -481,14 +503,19 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
       if (s === lastSec) return;
       lastSec = s;
       setPlayback();
-      buttons.forEach((b, bi) => b.setAttribute('aria-current', String(bi === s)));
+      ticks.forEach((b, bi) => b.setAttribute('aria-current', String(bi === s)));
       items.forEach((c) => c.el.classList.toggle('is-focus', c.sec === s));
       if (s === -1) {
-        titleName.textContent = 'All work';
-        titleMeta.textContent = `${labels.length} sections`;
+        nEl.textContent = '--';
+        tEl.textContent = 'All work';
+        mEl.textContent = `${labels.length} sections`;
       } else {
         const l = labels[s];
-        if (l) { titleName.textContent = l.name; titleMeta.textContent = l.meta; }
+        if (l) {
+          nEl.textContent = String(s + 1).padStart(2, '0');
+          tEl.textContent = l.name;
+          mEl.textContent = l.meta;
+        }
       }
     };
   
@@ -515,45 +542,60 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
       markMoving();
     };
   
+    // رأس التشغيل والخط والاسم — كلهم بيتحركوا مع نفس القيمة
+    const paintHead = (p: number) => {
+      const pc = gsap.utils.clamp(0, 1, p) * 100;
+      head.style.left = `${pc}%`;
+      prog.style.width = `${pc}%`;
+      // الاسم بيتثبّت بعرضه الفعلي مش بنسبة ثابتة — النسبة الثابتة
+      // بتقطعه على الشاشة الضيقة لأن عرضه بيبقى جزء كبير من المسار
+      const tw = track.offsetWidth;
+      const half = label.offsetWidth / 2;
+      const px = gsap.utils.clamp(half, Math.max(half, tw - half), (pc / 100) * tw);
+      label.style.left = `${(px / tw) * 100}%`;
+    };
+
     applyProgress(0);
+    paintHead(0);
   
     if (reduced) {
       Object.assign(cam, waypoints[1]);
       applyCamera();
       gsap.set(hud, { opacity: 0 });
-      bar.classList.add('is-on');
     } else {
       let jumping = false;
-      const prog = { p: 0 };
+      const pos = { p: 0 };
   
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: '.stage', start: 'top top', end: 'bottom bottom', scrub: 1.1,
           onUpdate: (self) => {
             setCurrent(Math.round(self.progress * segs));
-            barFill.style.width = `${self.progress * 100}%`;
+            paintHead(self.progress);
           },
         },
       });
-      tl.to(prog, {
+      tl.to(pos, {
         p: 1, duration: 1, ease: 'none',
-        onUpdate: () => { if (!jumping) applyProgress(prog.p); },
+        onUpdate: () => { if (!jumping) applyProgress(pos.p); },
       });
   
       tl.to(hud, { opacity: 0, duration: 0.3, ease: 'none' }, 0);
   
-      // الشريط بيظهر مع الحركة وبيختفي بعد سكون — الواجهة تسيب الشغل يتكلم
+      // المسار نفسه بيفضل ظاهر — هو رفيع كفاية. الاسم بس هو اللي
+      // بيخفت مع السكون، فالواجهة تسيب الشغل يتكلم من غير ما تختفي.
       let hideT: number;
-      const showBar = () => {
-        bar.classList.add('is-on');
+      const wake = () => {
+        label.style.opacity = '1';
         clearTimeout(hideT);
-        hideT = window.setTimeout(() => bar.classList.remove('is-on'), 2600);
+        hideT = window.setTimeout(() => { label.style.opacity = '.35'; }, 2600);
       };
       ['mousemove', 'wheel', 'touchstart', 'keydown'].forEach((e) =>
-        addEventListener(e, showBar, { passive: true, signal }),
+        addEventListener(e, wake, { passive: true, signal }),
       );
-      bar.addEventListener('mouseenter', () => clearTimeout(hideT));
-      bar.addEventListener('mouseleave', showBar);
+      track.addEventListener('mouseenter', () => clearTimeout(hideT), { signal });
+      track.addEventListener('mouseleave', wake, { signal });
+      wake();
   
       // ===== التنقّل =====
       let idx = 0;
@@ -578,10 +620,10 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
         else scrollTo({ top: y, behavior: 'auto' });
   
         // التايم لاين يتظبط على الهدف فورًا، فأي سكرول بعد كده يكمّل من هناك
-        prog.p = idx / segs;
+        pos.p = idx / segs;
         tl.progress(idx / segs);
         setCurrent(idx);
-        barFill.style.width = `${(idx / segs) * 100}%`;
+        paintHead(idx / segs);
   
         gsap.killTweensOf(cam);
         gsap.to(cam, {
@@ -593,7 +635,47 @@ const motes = Array.from({ length: 46 }, (_, i) => ({
         });
       };
   
-      buttons.forEach((b) => b.addEventListener('click', () => jumpTo(Number(b.dataset.go))));
+      ticks.forEach((b) =>
+        b.addEventListener('click', (e) => { e.stopPropagation(); jumpTo(Number(b.dataset.go)); }),
+      );
+
+      // ===== السحب على المسار =====
+      // السحب بيحرّك السكرول مباشرة — يعني بيتصرف زي السكرول بالظبط،
+      // بيعدّي على اللقطات اللي في الطريق. ده المقصود من الـscrub.
+      let scrubbing = false;
+      const fracFrom = (clientX: number) => {
+        const r = track.getBoundingClientRect();
+        return gsap.utils.clamp(0, 1, (clientX - r.left) / r.width);
+      };
+      const scrubTo = (clientX: number) => {
+        const sc = tl.scrollTrigger!;
+        const y = sc.start + (sc.end - sc.start) * fracFrom(clientX);
+        const lenis = (window as any).__lenis;
+        if (lenis) lenis.scrollTo(y, { immediate: true });
+        else scrollTo({ top: y, behavior: 'auto' });
+      };
+
+      track.addEventListener('pointerdown', (e) => {
+        // الكليك على علامة بيتولّى القفز المباشر بنفسه
+        if ((e.target as HTMLElement).closest('.scrub-tick')) return;
+        scrubbing = true;
+        jumping = false;
+        gsap.killTweensOf(cam);
+        track.setPointerCapture(e.pointerId);
+        scrubTo(e.clientX);
+      }, { signal });
+
+      track.addEventListener('pointermove', (e) => {
+        if (scrubbing) scrubTo(e.clientX);
+      }, { signal });
+
+      const endScrub = (e: PointerEvent) => {
+        if (!scrubbing) return;
+        scrubbing = false;
+        try { track.releasePointerCapture(e.pointerId); } catch {}
+      };
+      track.addEventListener('pointerup', endScrub, { signal });
+      track.addEventListener('pointercancel', endScrub, { signal });
       items.forEach((c) => c.el.addEventListener('click', () => jumpTo(c.sec + 2)));
       addEventListener('keydown', (e) => {
         if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;

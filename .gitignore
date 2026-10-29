@@ -29,3 +29,6 @@ dist/
 *.prproj
 *.aep
 !site/public/loops/*.mp4
+
+# ملفات بلندر الكبيرة — المشهد نفسه بيتولّد بسكربت
+blender/*.blend1

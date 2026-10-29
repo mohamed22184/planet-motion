@@ -26,7 +26,7 @@ const sections = [
     // كل عنقود فيه كارت مسيطر وباقي الكروت أصغر بوضوح — التباين في
     // المقاس هو اللي بيدي العين نقطة تبدأ منها
     id: 'motion', label: 'Motion', meta: '05 films', d: 180,
-    x: -1500, y: -620, z: -1300,
+    x: -1560, y: -700, z: -1200,
     items: [
       { w: 470, ar: '16 / 9', dx: -150, dy: -120, dz:  200, tc: '00:42' },
       { w: 190, ar: '1 / 1',  dx:  250, dy: -175, dz:  -60, tc: '01:10' },
@@ -37,7 +37,7 @@ const sections = [
   },
   {
     id: 'ai', label: 'AI', meta: '04 experiments', d: 190,
-    x: 1560, y: -520, z: -1900,
+    x: 1580, y: -700, z: -1600,
     items: [
       { w: 420, ar: '16 / 9', dx:  110, dy: -110, dz:  180, tc: '00:33' },
       { w: 165, ar: '9 / 16', dx: -215, dy:  -60, dz:  -40, tc: '00:18' },
@@ -47,7 +47,7 @@ const sections = [
   },
   {
     id: 'edit', label: 'Edit', meta: '04 cuts', d: 185,
-    x: -1400, y: 760, z: -900,
+    x: -1700, y: 620, z: -1000,
     items: [
       { w: 450, ar: '16 / 9', dx: -130, dy: -115, dz:  190, tc: '01:35' },
       { w: 180, ar: '1 / 1',  dx:  235, dy: -145, dz:  -70, tc: '00:51' },
@@ -57,12 +57,12 @@ const sections = [
   },
   {
     id: 'about', label: 'About', meta: 'Cairo / Riyadh', d: 300,
-    x: 1680, y: 700, z: -2500,
+    x: 1720, y: 620, z: -2000,
     items: [{ w: 430, ar: '1 / 1', dx: 0, dy: 0, dz: 0, tc: '—' }],
   },
   {
     id: 'contact', label: 'Contact', meta: "Let's talk", d: 300,
-    x: -200, y: 1400, z: -3100,
+    x: 0, y: 1250, z: -2400,
     items: [{ w: 500, ar: '16 / 9', dx: 0, dy: 0, dz: 0, tc: '—' }],
   },
 ];
@@ -364,19 +364,24 @@ const SEGS = sections.length + 1;
     const computeWide = (): WP => {
       const halfW = items.map((c) => Math.abs(c.x) + (Number(c.el.dataset.w) * fit) / 2);
       const halfH = items.map((c) => Math.abs(c.y) + (Number(c.el.dataset.w) * fit) / 2);
-      const xs = items.map((c) => c.x), ys = items.map((c) => c.y), zs = items.map((c) => c.z);
-      const tx = (Math.min(...xs) + Math.max(...xs)) / 2;
-      const ty = (Math.min(...ys) + Math.max(...ys)) / 2;
+      // الهدف هو الريل نفسه (مركز الفراغ) مش مركز صندوق الإحاطة.
+      // لو اتمركزنا على صندوق الإحاطة، الريل بيزيح عن النص لأن
+      // الأقسام مش متوزعة بالتساوي حواليه تمامًا. وحساب halfW/halfH
+      // تحت متبني على المسافة من الأصل أصلًا، فده بيخلّيهم متسقين.
+      const zs = items.map((c) => c.z);
+      const tx = 0, ty = 0;
       const tz = (Math.min(...zs) + Math.max(...zs)) / 2;
   
       const P = 900 * fit;
       // التقريب المطلوب عشان الامتداد كله يدخل الفريم مع هامش
       const need = Math.min(
-        (innerWidth / 2) * 0.82 / Math.max(...halfW),
-        (innerHeight / 2) * 0.72 / Math.max(...halfH),
+        (innerWidth / 2) * 0.92 / Math.max(...halfW),
+        (innerHeight / 2) * 0.84 / Math.max(...halfH),
       );
       // الكروت الأقرب بتتكبر أكتر من المركز، فبناخد هامش أمان
-      const d = P * (1 - 1 / (need * 0.78));
+      // 0.86 مش 1: الكروت الأقرب بتتكبر أكتر من المركز، وبارالاكس
+      // الماوس بيلفّ المشهد لحد 4.5 درجة — الهامش بيحسب للاتنين
+      const d = P * (1 - 1 / (need * 0.86));
       return { tx, ty, tz, d, rx: 0, ry: 0 };
     };
   
@@ -431,13 +436,29 @@ const SEGS = sections.length + 1;
   
     let lastSec = -2;
   
+    // ===== نظرة الكاميرا =====
+    // الكاميرا بتلفّ ناحية الماوس بتخميد، ومعاها انجراف بطيء مستمر.
+    // الدوران بيحصل حوالين الهدف، فالعناصر القريبة بتزيح أكتر من
+    // البعيدة لوحدها — ده البارالاكس بييجي من المنظور مش من كود.
+    const look = { x: 0, y: 0 };
+    const lookT = { x: 0, y: 0 };
+    const LOOK_RY = 4.5, LOOK_RX = 3.2;
+
     const applyCamera = () => {
+      // الانجراف البطيء بيمنع المشهد إنه يتجمّد تمامًا لما الزائر يقف
+      const t = performance.now();
+      const dy = Math.sin(t * 0.00011) * 0.55;
+      const dx = Math.cos(t * 0.00009) * 0.4;
+
+      const ry = cam.ry + look.x * LOOK_RY + dy;
+      const rx = cam.rx - look.y * LOOK_RX + dx;
+
       world.style.transform =
-        `translateZ(${cam.d}px) rotateX(${cam.rx}deg) rotateY(${cam.ry}deg) ` +
+        `translateZ(${cam.d}px) rotateX(${rx}deg) rotateY(${ry}deg) ` +
         `translate3d(${-cam.tx}px, ${-cam.ty}px, ${-cam.tz}px)`;
-  
-      const sy = Math.sin(rad(cam.ry)), cy = Math.cos(rad(cam.ry));
-      const sx = Math.sin(rad(cam.rx)), cx = Math.cos(rad(cam.rx));
+
+      const sy = Math.sin(rad(ry)), cy = Math.cos(rad(ry));
+      const sx = Math.sin(rad(rx)), cx = Math.cos(rad(rx));
   
       items.forEach((c) => {
         const px = c.x - cam.tx, py = c.y - cam.ty, pz = c.z - cam.tz;
@@ -587,6 +608,25 @@ const SEGS = sections.length + 1;
 
     applyProgress(0);
     paintHead(0);
+
+    // اللمس مستثنى: pointermove على الموبايل بيحصل وإنت ساحب للسكرول،
+    // فالمشهد كان هيلفّ مع كل سحبة ويزاحم إحساس السكرول نفسه.
+    if (!reduced && matchMedia('(pointer: fine)').matches) {
+      addEventListener('pointermove', (e) => {
+        lookT.x = (e.clientX / innerWidth - 0.5) * 2;
+        lookT.y = (e.clientY / innerHeight - 0.5) * 2;
+      }, { passive: true, signal });
+
+      // التخميد هو اللي بيدي الإحساس بالسلاسة: المشهد بيلحق الماوس
+      // بتأخير بدل ما يلزق فيه. 0.055 ≈ نص ثانية عشان يستقر.
+      const tick = () => {
+        look.x += (lookT.x - look.x) * 0.055;
+        look.y += (lookT.y - look.y) * 0.055;
+        applyCamera();
+      };
+      gsap.ticker.add(tick);
+      signal.addEventListener('abort', () => gsap.ticker.remove(tick));
+    }
   
     if (reduced) {
       Object.assign(cam, waypoints[1]);

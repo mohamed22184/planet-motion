@@ -7,48 +7,23 @@
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { sections } from '../site/src/data/work.ts';
+import { W, H, P, FPS, cards, computeWide, camDist, EASE } from './scene.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-
-// نفس مرجع الموقع: fit = 1 عند 1440، والـperspective 900
-const W = 1440, H = 810, P = 900, FPS = 25, DUR = 10;
-
-const cards = [];
-for (const [si, sec] of sections.entries()) {
-  for (const it of sec.items) {
-    const [a, b] = it.ar.split('/').map((n) => Number(n.trim()));
-    cards.push({
-      name: `${sec.label} · ${it.title}`,
-      sec: si,
-      w: it.w,
-      h: Math.round((it.w * b) / a),
-      x: sec.x + it.dx,
-      y: sec.y + it.dy,
-      z: sec.z + it.dz,
-    });
-  }
-}
+const DUR = 10;
 
 // ===== اللقطة الواسعة — نفس computeWide في index.astro =====
-const halfW = cards.map((c) => Math.abs(c.x) + c.w / 2);
-const halfH = cards.map((c) => Math.abs(c.y) + c.w / 2);
-const zs = cards.map((c) => c.z);
-const tzWide = (Math.min(...zs) + Math.max(...zs)) / 2;
-const need = Math.min(
-  ((W / 2) * 0.92) / Math.max(...halfW),
-  ((H / 2) * 0.84) / Math.max(...halfH),
-);
-const dWide = P * (1 - 1 / (need * 0.82));
+const wide = computeWide();
+const tzWide = wide.tz, dWide = wide.d;
 
 // لقطة الافتتاح: قريب على الـReel
-const reel = sections[0];
+const reel = cards.find((c) => c.sec === 0);
 const dReel = 470;
-const tzReel = reel.z + reel.items[0].dz;
+const tzReel = reel.z;
 
 // AE: z موجب = بعيد، والعكس في CSS. والكاميرا بتقعد على بعد P − d
 // من الهدف، فالتكبير zoom/distance = P/(P − d) — نفس معادلة الموقع.
-const camZ = (d) => -(P - d);
+const camZ = (d) => -camDist(d);
 
 // الترتيب: الأقرب للريل بيوصل الأول — الوصول بيتقرا كموجة من النص لبرّه
 const order = [...cards.keys()].sort(
@@ -103,7 +78,7 @@ const jsx = `// ⚠️ متولّد — ماتعدّلش الملف ده. عدّ
   // = (1−x2)·100. فلو قريت المنحنى تاني بـread-ease.jsx لازم يرجع
   // نفس الأربع أرقام — ده الاختبار إن الاتجاهين مظبوطين.
   // مفاتيح AE بتبدأ من 1 مش 0.
-  var EASE = { x1: 0.16, y1: 1, x2: 0.30, y2: 1 };
+  var EASE = ${JSON.stringify(EASE)};
   function easeTo(prop, delta, dur) {
     var n = prop.numKeys;
     var rate = delta / dur;

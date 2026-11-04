@@ -13,6 +13,7 @@
   var CARDS = [
     {
       "name": "Reel 2026 · Reel 2026",
+      "slug": "reel-2026",
       "sec": 0,
       "w": 660,
       "h": 371,
@@ -24,6 +25,7 @@
     },
     {
       "name": "Motion · Brand film",
+      "slug": "brand-film",
       "sec": 1,
       "w": 470,
       "h": 264,
@@ -35,6 +37,7 @@
     },
     {
       "name": "Motion · Social loop",
+      "slug": "social-loop",
       "sec": 1,
       "w": 190,
       "h": 190,
@@ -46,6 +49,7 @@
     },
     {
       "name": "Motion · Explainer",
+      "slug": "explainer",
       "sec": 1,
       "w": 230,
       "h": 129,
@@ -57,6 +61,7 @@
     },
     {
       "name": "Motion · Vertical cut",
+      "slug": "vertical-cut",
       "sec": 1,
       "w": 150,
       "h": 267,
@@ -68,6 +73,7 @@
     },
     {
       "name": "Motion · Title system",
+      "slug": "title-system",
       "sec": 1,
       "w": 175,
       "h": 175,
@@ -79,6 +85,7 @@
     },
     {
       "name": "AI · AI spot",
+      "slug": "ai-spot",
       "sec": 2,
       "w": 420,
       "h": 236,
@@ -90,6 +97,7 @@
     },
     {
       "name": "AI · AI vertical",
+      "slug": "ai-vertical",
       "sec": 2,
       "w": 165,
       "h": 293,
@@ -101,6 +109,7 @@
     },
     {
       "name": "AI · AI texture",
+      "slug": "ai-texture",
       "sec": 2,
       "w": 185,
       "h": 185,
@@ -112,6 +121,7 @@
     },
     {
       "name": "AI · AI hybrid",
+      "slug": "ai-hybrid",
       "sec": 2,
       "w": 215,
       "h": 121,
@@ -123,6 +133,7 @@
     },
     {
       "name": "Edit · Doc cut",
+      "slug": "doc-cut",
       "sec": 3,
       "w": 450,
       "h": 253,
@@ -134,6 +145,7 @@
     },
     {
       "name": "Edit · Promo",
+      "slug": "promo",
       "sec": 3,
       "w": 180,
       "h": 180,
@@ -145,6 +157,7 @@
     },
     {
       "name": "Edit · Long form",
+      "slug": "long-form",
       "sec": 3,
       "w": 225,
       "h": 127,
@@ -156,6 +169,7 @@
     },
     {
       "name": "Edit · Reels pack",
+      "slug": "reels-pack",
       "sec": 3,
       "w": 155,
       "h": 276,
@@ -167,6 +181,7 @@
     },
     {
       "name": "About · About",
+      "slug": "about",
       "sec": 4,
       "w": 430,
       "h": 430,
@@ -178,6 +193,7 @@
     },
     {
       "name": "Contact · Contact",
+      "slug": "contact",
       "sec": 5,
       "w": 500,
       "h": 281,
@@ -212,7 +228,7 @@
   // = (1−x2)·100. فلو قريت المنحنى تاني بـread-ease.jsx لازم يرجع
   // نفس الأربع أرقام — ده الاختبار إن الاتجاهين مظبوطين.
   // مفاتيح AE بتبدأ من 1 مش 0.
-  var EASE = { x1: 0.16, y1: 1, x2: 0.30, y2: 1 };
+  var EASE = {"x1":0.16,"y1":1,"x2":0.3,"y2":1};
   function easeTo(prop, delta, dur) {
     var n = prop.numKeys;
     var rate = delta / dur;

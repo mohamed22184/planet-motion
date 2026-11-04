@@ -1,0 +1,1 @@
+// متولّد من PM — Assembly — 1 منحنى مختلف// CAM › Position  ·  32 بروبرتي بنفس المنحنى  ·  2.6scubic-bezier(0.16, 1, 0.3, 1)CustomEase.create("pm1", "M0,0 C0.16,1 0.3,1 1,1")

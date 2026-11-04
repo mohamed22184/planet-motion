@@ -34,6 +34,24 @@ const { title } = Astro.props;
         document.documentElement.classList.add(skip ? 'intro-off' : 'intro-on');
       })();
     </script>
+    <!-- قياس: بيسجّل أزمنة الفريمات من أول فريم في الصفحة ولحظة
+         شيل البريلودر. ديف بس — مش موجود في البيلد. -->
+    {import.meta.env.DEV && (
+      <script is:inline set:html={`
+        window.__t0 = performance.now(); window.__frames = [];
+        (function(){ var l = performance.now();
+          (function L(){ var n = performance.now();
+            window.__frames.push(n - l); l = n; requestAnimationFrame(L); })(); })();
+        // لازم نتأكد إننا شوفنا البريلودر الأول: وإلا أول mutation
+        // وقت تحليل الصفحة (والـbody لسه مش موجود) بتسجّل 0
+        var seen = false;
+        new MutationObserver(function(){
+          if (document.querySelector('#intro')) { seen = true; return; }
+          if (seen && !window.__introEnd)
+            window.__introEnd = performance.now() - window.__t0;
+        }).observe(document.documentElement, { childList: true, subtree: true });
+      `} />
+    )}
     <title>{title}</title>
 
     <!-- الخطوط متنزّلة على الموقع (شوف src/styles/fonts.css).
@@ -97,9 +115,59 @@ const { title } = Astro.props;
     <div class="wipe" id="wipe" aria-hidden="true" transition:persist="wipe"></div>
 
     <div class="intro" id="intro" aria-hidden="true">
-      <div class="intro-mark">
-        <span class="intro-line"><span>Planet</span></span>
-        <span class="intro-line"><span>Motion</span></span>
+      <div class="intro-stage">
+        <!-- علامة الكوكب بترسم نفسها. الكاميرا هي اللي بتلف حوالين
+             الكوكب: الحزام بيبدأ شبه خط (شايفينه من مستوى مداره)
+             وبيتفتّح لحد ميله الطبيعي — والنص البعيد منه مخفي ورا
+             الكرة، فالترتيب نفسه بيدي عمق. مفيش فلتر SVG على حاجة
+             بتتحرك؛ الكل تدرّجات + تمويه CSS على الكرة بس. -->
+        <svg class="intro-planet" viewBox="-100 -100 200 200"
+             aria-hidden="true" focusable="false">
+          <defs>
+            <clipPath id="ip-globe"><circle r="42" /></clipPath>
+            <radialGradient id="ip-body" cx="34%" cy="26%" r="78%">
+              <stop offset="0%"   stop-color="#B06A3C" />
+              <stop offset="42%"  stop-color="#6E3C24" />
+              <stop offset="78%"  stop-color="#3A2018" />
+              <stop offset="100%" stop-color="#180F0C" />
+            </radialGradient>
+            <radialGradient id="ip-shade" cx="32%" cy="24%" r="82%">
+              <stop offset="0%"   stop-color="#FFFFFF" stop-opacity=".10" />
+              <stop offset="46%"  stop-color="#140F0D" stop-opacity="0" />
+              <stop offset="100%" stop-color="#0B0706" stop-opacity=".88" />
+            </radialGradient>
+            <linearGradient id="ip-rim" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%"   stop-color="#E8A06A" stop-opacity=".75" />
+              <stop offset="45%"  stop-color="#E8A06A" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+
+          <!-- النص البعيد من الحزام — بيتخفي ورا الكرة -->
+          <g class="ip-tilt"><path class="ip-belt" id="ipFar" d="M -76 0 A 76 27 0 0 1 76 0" /></g>
+
+          <g class="ip-globe" id="ipGlobe">
+            <g clip-path="url(#ip-globe)" transform="rotate(-22)">
+              <circle r="42" fill="url(#ip-body)" />
+              <g opacity=".5">
+                <ellipse cy="-24" rx="42" ry="6"   fill="#2A1712" />
+                <ellipse cy="-9"  rx="42" ry="4"   fill="#C2561B" />
+                <ellipse cy="4"   rx="42" ry="7"   fill="#2A1712" />
+                <ellipse cy="20"  rx="42" ry="5"   fill="#3E2723" />
+              </g>
+              <ellipse cx="-12" cy="9" rx="9" ry="4.5" fill="#E65100" opacity=".8" />
+              <circle r="42" fill="url(#ip-shade)" />
+            </g>
+            <circle r="41.2" fill="none" stroke="url(#ip-rim)" stroke-width="1.6" />
+          </g>
+
+          <!-- النص القريب فوق الكرة، ومعاه رأس تشغيل بيلفّ المدار -->
+          <g class="ip-tilt">
+            <path class="ip-belt" id="ipNear" d="M 76 0 A 76 27 0 0 1 -76 0" />
+            <path class="ip-play" id="ipPlay" d="M 76 0 A 76 27 0 0 1 -76 0" />
+          </g>
+        </svg>
+
+        <span class="intro-name mono" id="introName">Planet Motion</span>
       </div>
       <span class="intro-tc mono" id="introTc">00:00:00:00</span>
       <span class="intro-bar" id="introBar"></span>
@@ -146,7 +214,13 @@ const { title } = Astro.props;
         const introEl = document.querySelector<HTMLElement>('#intro');
   
         const runIntro = async () => {
-          if (!introEl || document.documentElement.classList.contains('intro-off')) {
+          // البوابة على sessionStorage مش على كلاس الـhtml: الكلاس
+          // بيتحط من سكربت الـhead اللي بيتنفّذ في التحميل الكامل بس،
+          // لكن راوتر Astro بيعيد تركيب الـbody — فالبريلودر كان
+          // بيترسم من أول في كل تنقّل داخلي.
+          let seen = false;
+          try { seen = !!sessionStorage.getItem('pm-intro'); } catch {}
+          if (!introEl || seen || document.documentElement.classList.contains('intro-off')) {
             // بنشيله من الصفحة مش بنعتمد على display:none — لو الـCSS
             // اتأخر أو فشل، العنصر كان هيغطي المحتوى
             introEl?.remove();
@@ -161,12 +235,40 @@ const { title } = Astro.props;
           const barEl = document.querySelector<HTMLElement>('#introBar')!;
           const pad = (n: number) => String(Math.floor(n)).padStart(2, '0');
   
-          // الـset مقصودة — نفس فخ الـline-mask: GSAP بيقرا translateY(105%)
-          // من الـCSS كـ y بالبكسل، فلازم نصفّره ونسجّل البداية كـ yPercent.
-          gsap.set('.intro-line > span', { y: 0, yPercent: 105 });
-          gsap.to('.intro-line > span', {
-            yPercent: 0, duration: 0.7, ease: 'power4.out', stagger: 0.07,
-          });
+          // ===== رسم علامة الكوكب =====
+          // مش كتابة الاسم: الكاميرا بتلفّ حوالين الكوكب والحزام
+          // بيتفتّح من مستوى مداره. العمق هنا من تلات حاجات مع بعض:
+          // الحجب (نص الحزام البعيد ورا الكرة)، اختصار المنظور
+          // (scaleY بيكبر = الكاميرا بتميل)، وعمق الميدان (الكرة
+          // بتوضح من تمويه). الميل على مجموعات الحزام مش على الـSVG
+          // كله عشان الكرة تفضل دايرة — الكرة مابتختصرش مع الميل.
+          const tilts = gsap.utils.toArray<SVGGElement>('.ip-tilt');
+          const far = document.querySelector<SVGPathElement>('#ipFar')!;
+          const near = document.querySelector<SVGPathElement>('#ipNear')!;
+          const play = document.querySelector<SVGPathElement>('#ipPlay')!;
+          const L = near.getTotalLength();
+
+          // vector-effect في الـCSS بيمنع الـstroke من إنه يرقّ مع scaleY
+          gsap.set(tilts, { svgOrigin: '0 0', scaleY: 0.06, rotation: -7 });
+          gsap.set([far, near], { strokeDasharray: L, strokeDashoffset: L });
+          gsap.set(play, { strokeDasharray: `14 ${L}`, strokeDashoffset: L });
+          gsap.set('#ipGlobe', { svgOrigin: '0 0', scale: 0.84, opacity: 0, filter: 'blur(10px)' });
+          gsap.set('#introName', { opacity: 0, y: 8 });
+
+          const draw = gsap.timeline();
+          draw
+            .to('#ipGlobe', { scale: 1, opacity: 1, filter: 'blur(0px)', duration: 0.58, ease: 'expo.out' }, 0)
+            .to(tilts, { scaleY: 1, rotation: -22, duration: 0.62, ease: 'expo.out' }, 0.02)
+            .to(far, { strokeDashoffset: 0, duration: 0.44, ease: 'power2.out' }, 0.04)
+            .to(near, { strokeDashoffset: 0, duration: 0.44, ease: 'power2.out' }, 0.12)
+            // رأس التشغيل: شرطة أكسنت واحدة بتلفّ المدار — نفس
+            // مفردة السكرابر، وحجمها يخليها تحت سقف الـ3%
+            .to(play, { strokeDashoffset: -14, duration: 0.46, ease: 'power1.inOut' }, 0.08)
+            .to('#introName', { opacity: 1, y: 0, duration: 0.36, ease: 'power3.out' }, 0.2);
+
+          // في الديف بس: منفذ للرسمة عشان نقدر نوقّفها ونقيسها فريم
+          // بفريم. بيتشال في البيلد.
+          if (import.meta.env.DEV) (window as any).__introTl = draw;
   
           // التايمكود بيعدّ بالوقت الحقيقي على 25 فريم/ثانية — زي قارئ
           // تايمكود حقيقي، مش نسبة تحميل متنكّرة في شكل تايمكود.
@@ -189,13 +291,16 @@ const { title } = Astro.props;
           const left = FLOOR - (performance.now() - t0);
           if (left > 0) await new Promise((r) => setTimeout(r, left));
   
+          // الرسمة لازم تكمل قبل الخروج — لولا كده الخطوط اللي بتجهز
+          // بدري بتخلي المسح يقطع العلامة في نص ما هي بترسم
+          await draw.then();
           cancelAnimationFrame(raf);
   
           await gsap
             .timeline()
-            .to('.intro-mark, .intro-tc, .intro-bar', { opacity: 0, duration: 0.18, ease: 'power2.in' })
+            .to('.intro-stage, .intro-tc, .intro-bar', { opacity: 0, duration: 0.18, ease: 'power2.in' })
             // المسح لفوق وخط الأكسنت هو الحافة القُدّام
-            .to(introEl, { yPercent: -100, duration: 0.55, ease: 'power3.inOut' }, 0.1)
+            .to(introEl, { yPercent: -100, duration: 0.48, ease: 'power3.inOut' }, 0.1)
             .then();
   
           introEl.remove();

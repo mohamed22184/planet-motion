@@ -84,18 +84,31 @@ a { color: inherit; }
   background: var(--accent);
 }
 html.intro-off .intro { display: none; }
+/* زرار المينيو فوق البريلودر في ترتيب الطبقات (9600 > 9000) وكان
+   بيتراكب مع التايمكود. البريلودر لوحده على الشاشة. */
+html.intro-on .menu-btn { opacity: 0; pointer-events: none; }
 /* القفل على الـhtml مش الـbody: Lenis بيكتب على الـbody */
 html.intro-on { overflow: hidden; }
 
-.intro-mark {
-  font-family: var(--font-display);
-  font-size: clamp(2.4rem, 7vw, 5rem);
-  font-weight: 700; line-height: .95; letter-spacing: -.03em;
-  text-align: center;
+/* البريلودر بيرسم علامة الكوكب. الاسم بقى سطر مونو صغير تحتها —
+   الهوية هي اللي بتفتح الموقع، مش التايبوغرافي. */
+.intro-stage { display: grid; justify-items: center; }
+.intro-planet {
+  width: clamp(150px, 26vw, 252px); height: auto; display: block;
+  overflow: visible;
 }
-.intro-line { display: block; overflow: hidden; }
-.intro-line > span { display: block; transform: translateY(105%); }
-.intro-line:last-child > span { color: var(--accent); }
+.ip-belt, .ip-play {
+  fill: none;
+  /* من غير ده الـstroke بيرقّ مع scaleY فالحزام بيختفي في أول الحركة */
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+}
+.ip-belt { stroke: var(--text-dim); stroke-width: 1.7; opacity: .8; }
+.ip-play { stroke: var(--accent); stroke-width: 2.8; }
+.intro-name {
+  margin-top: var(--s-4);
+  letter-spacing: .34em; color: var(--text-dim);
+}
 
 .intro-tc {
   position: absolute; right: var(--s-4); bottom: var(--s-4);

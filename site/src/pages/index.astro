@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Base from '../layouts/Base.astro';
 import { sections } from '../data/work';
+import Mark from '../components/Mark.astro';
 
 // بنقرا اللوبات الموجودة فعلًا وقت البناء. الكارت اللي ملوش ملف
 // مابياخدش عنصر فيديو أصلًا — من غير كده كل كارت بيعمل طلبين
@@ -138,7 +139,7 @@ const SEGS = sections.length + 1;
 
   <!-- الهوية والتنقّل كلهم على الحافة السفلى — منطقتين بدل أربع أركان -->
   <div class="foot">
-    <span class="foot-l mono"><i class="dot"></i> Planet Motion<em> · Available</em></span>
+    <span class="foot-l mono"><Mark size={14} class="mk" /> Planet Motion<em> · Available</em></span>
     <span class="foot-r mono"><span id="tc">00:00:00:00</span></span>
   </div>
 

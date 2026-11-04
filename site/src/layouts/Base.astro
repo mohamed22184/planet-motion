@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ClientRouter } from 'astro:transitions';
 import { sections } from '../data/work';
+import Mark from '../components/Mark.astro';
 import '../styles/global.css';
 
 // نفس منطق الكروت: الكارت اللي ملوش لوب مابياخدش عنصر فيديو أصلًا
@@ -44,6 +45,10 @@ const { title } = Astro.props;
           href="/fonts/geist-mono-latin.woff2" />
 
     <!-- من غير جافاسكريبت مفيش حاجة تشيل البريلودر، فكان هيغطي الموقع -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/logo/planet-blender.png" />
+    <meta name="theme-color" content="#140F0D" />
+
     <noscript><style>.intro { display: none !important; }</style></noscript>
 
     <ClientRouter />
@@ -85,7 +90,7 @@ const { title } = Astro.props;
       </nav>
 
       <div class="menu-foot mono">
-        <span><i class="dot"></i> Available for work</span>
+        <span><Mark size={15} class="mk" /> Planet Motion · Available</span>
         <a href="mailto:hello@planetmotion.studio">hello@planetmotion.studio</a>
       </div>
     </div>

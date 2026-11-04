@@ -250,3 +250,6 @@ html.intro-on { overflow: hidden; }
   .menu-nav .m { display: none; }
   .menu-foot { flex-direction: column; gap: 6px; right: calc(var(--fi) + 90px); }
 }
+
+/* العلامة جنب الاسم — بتاخد لون المكان، وبتنوّر بالأكسنت مع الهوفر */
+.mk { color: var(--accent); flex: none; }

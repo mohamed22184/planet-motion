@@ -1,6 +1,19 @@
 ---
+import fs from 'node:fs';
+import path from 'node:path';
 import { ClientRouter } from 'astro:transitions';
+import { sections } from '../data/work';
 import '../styles/global.css';
+
+// نفس منطق الكروت: الكارت اللي ملوش لوب مابياخدش عنصر فيديو أصلًا
+const loopsDir = path.join(process.cwd(), 'public', 'loops');
+const loopFiles = new Set(fs.existsSync(loopsDir) ? fs.readdirSync(loopsDir) : []);
+const firstLoop = (id: string) => {
+  for (const ext of ['mp4', 'webm']) {
+    if (loopFiles.has(`${id}-1.${ext}`)) return `/loops/${id}-1.${ext}`;
+  }
+  return '';
+};
 interface Props { title: string; }
 const { title } = Astro.props;
 ---
@@ -38,6 +51,44 @@ const { title } = Astro.props;
   <body>
     <!-- بيفضل في مكانه وقت تبديل الصفحة، وإلا كان هيختفي في نص المسح -->
     <a class="skip" href="#main">Skip to content</a>
+
+    <!-- ===== المينيو =====
+         شاشة كاملة، والهوفر على القسم بيشغّل لوب منه في الخلفية.
+         موجودة في الـlayout فبتشتغل في كل الصفحات — وده بيحل كمان
+         إن الصفحات الداخلية مكنش ليها طريق غير الرجوع للرئيسية. -->
+    <button class="menu-btn mono" id="menuBtn" type="button"
+            aria-expanded="false" aria-controls="menu">
+      <span class="menu-btn-t">Menu</span>
+      <span class="menu-bars" aria-hidden="true"><i></i><i></i></span>
+    </button>
+
+    <div class="menu" id="menu" aria-hidden="true">
+      <video class="menu-bg" id="menuBg" muted loop playsinline preload="none"></video>
+      <div class="menu-veil"></div>
+
+      <nav class="menu-nav" aria-label="Sections">
+        <ul>
+          {sections.map((sec, i) => (
+            <li>
+              <a
+                href={sec.id === 'about' || sec.id === 'contact' ? `/${sec.id}` : `/#${sec.id}`}
+                data-sec={sec.id}
+                data-loop={firstLoop(sec.id)}
+              >
+                <span class="mono n">{String(i + 1).padStart(2, '0')}</span>
+                <span class="menu-line"><span>{sec.label}</span></span>
+                <span class="mono m">{sec.meta}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div class="menu-foot mono">
+        <span><i class="dot"></i> Available for work</span>
+        <a href="mailto:hello@planetmotion.studio">hello@planetmotion.studio</a>
+      </div>
+    </div>
     <div class="wipe" id="wipe" aria-hidden="true" transition:persist="wipe"></div>
 
     <div class="intro" id="intro" aria-hidden="true">
@@ -199,7 +250,79 @@ const { title } = Astro.props;
           });
         });
   
-        // الخطوط بتغيّر ارتفاعات العناصر — لازم ScrollTrigger يعيد الحساب بعد ما تحمّل.
+        // ===== المينيو =====
+      const menu = document.querySelector<HTMLElement>('#menu');
+      const menuBtn = document.querySelector<HTMLButtonElement>('#menuBtn');
+      const menuBg = document.querySelector<HTMLVideoElement>('#menuBg');
+
+      if (menu && menuBtn && menuBg) {
+        const links = Array.from(menu.querySelectorAll<HTMLAnchorElement>('a'));
+        const lines = menu.querySelectorAll<HTMLElement>('.menu-line > span');
+        let open = false;
+
+        const setBg = (src: string) => {
+          if (!src) { menu.classList.remove('has-bg'); menuBg.removeAttribute('src'); return; }
+          if (menuBg.getAttribute('src') === src) return;
+          menuBg.src = src;
+          menuBg.load();
+          menuBg.play().then(() => menu.classList.add('has-bg')).catch(() => {});
+        };
+
+        const openMenu = () => {
+          if (open) return;
+          open = true;
+          menu.classList.add('is-open');
+          menu.setAttribute('aria-hidden', 'false');
+          menuBtn.setAttribute('aria-expanded', 'true');
+          document.documentElement.style.overflow = 'hidden';
+          if (!reduced) {
+            gsap.set(lines, { y: 0, yPercent: 105 });
+            gsap.to(lines, { yPercent: 0, duration: 0.7, ease: 'power4.out', stagger: 0.055 });
+          }
+          links[0]?.focus();
+        };
+
+        const closeMenu = () => {
+          if (!open) return;
+          open = false;
+          menu.classList.remove('is-open', 'has-bg');
+          menu.setAttribute('aria-hidden', 'true');
+          menuBtn.setAttribute('aria-expanded', 'false');
+          document.documentElement.style.overflow = '';
+          menuBg.pause();
+          // دايمًا للزرار، مش لآخر عنصر كان مركّز عليه. الزرار هو اللي
+          // بيملك المينيو، والرجوع لحاجة تانية بيسيب المستخدم تايه.
+          menuBtn.focus();
+        };
+
+        menuBtn.addEventListener('click', () => (open ? closeMenu() : openMenu()), { signal });
+
+        // الهوفر بيشغّل لوب القسم في الخلفية
+        links.forEach((a) => {
+          a.addEventListener('mouseenter', () => setBg(a.dataset.loop || ''), { signal });
+          a.addEventListener('focus', () => setBg(a.dataset.loop || ''), { signal });
+        });
+        menu.addEventListener('mouseleave', () => setBg(''), { signal });
+
+        addEventListener('keydown', (e) => {
+          if (!open) return;
+          if (e.key === 'Escape') { e.preventDefault(); closeMenu(); return; }
+          if (e.key !== 'Tab') return;
+          // مصيدة تركيز بترتيب الصفحة الحقيقي: الزرار متكتوب قبل
+          // المينيو فهو الأول. لو عكسناهم، الـTab من آخر لينك بيخرج
+          // لعناصر الصفحة اللي ورا المينيو.
+          const focusables = [menuBtn, ...links];
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }, { signal });
+
+        // التنقّل بيقفلها — غير كده بتفضل مفتوحة فوق الصفحة الجديدة
+        document.addEventListener('astro:before-swap', closeMenu, { once: true });
+      }
+
+      // الخطوط بتغيّر ارتفاعات العناصر — لازم ScrollTrigger يعيد الحساب بعد ما تحمّل.
         // الشرط على signal عشان مانعملش refresh بعد ما الصفحة اتبدّلت.
         document.fonts?.ready.then(() => { if (!signal.aborted) ScrollTrigger.refresh(); });
   

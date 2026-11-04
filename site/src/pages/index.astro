@@ -139,7 +139,7 @@ const SEGS = sections.length + 1;
   <!-- الهوية والتنقّل كلهم على الحافة السفلى — منطقتين بدل أربع أركان -->
   <div class="foot">
     <span class="foot-l mono"><i class="dot"></i> Planet Motion<em> · Available</em></span>
-    <span class="foot-r mono"><span id="tc">00:00:00:00</span> <a href="/about">About</a></span>
+    <span class="foot-r mono"><span id="tc">00:00:00:00</span></span>
   </div>
 
   <section class="after wrap">
@@ -223,8 +223,9 @@ const SEGS = sections.length + 1;
 
   /* ===== الحافة السفلى: الهوية والتنقّل ===== */
   .foot {
+    /* اليمين محجوز لزرار المينيو — التايمكود كان بيتراكب معاه */
     position: fixed; z-index: 55; bottom: var(--fi);
-    left: var(--fi); right: var(--fi);
+    left: var(--fi); right: calc(var(--fi) + 112px);
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 7px; pointer-events: none;
   }
@@ -299,7 +300,7 @@ const SEGS = sections.length + 1;
     .scrub-label .t { font-size: .8rem; }
     .scrub-label .m { display: none; }
     /* النقطة البرتقاني لوحدها بتقول Available — النص بيلفّ على سطرين */
-    .foot { font-size: 9px; }
+    .foot { font-size: 9px; right: calc(var(--fi) + 86px); }
     .foot em { display: none; }
   }
 </style>
@@ -712,6 +713,18 @@ const SEGS = sections.length + 1;
       ticks.forEach((b) =>
         b.addEventListener('click', (e) => { e.stopPropagation(); jumpTo(Number(b.dataset.go)); }),
       );
+
+      // لينكات المينيو بتوصل على /#motion وخلافه. من غير ده الزائر
+      // بيرجع للرئيسية على اللقطة الافتتاحية، والمينيو تبقى وعدت
+      // بحاجة مانفّذتهاش.
+      const goToHash = () => {
+        const id = location.hash.slice(1);
+        if (!id) return;
+        const at = ticks.findIndex((t) => t.getAttribute('aria-label')?.toLowerCase().startsWith(id));
+        if (at >= 0) jumpTo(at + 2);
+      };
+      goToHash();
+      addEventListener('hashchange', goToHash, { signal });
 
 
       // ===== السحب على المسار =====

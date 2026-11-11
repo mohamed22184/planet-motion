@@ -124,6 +124,30 @@ html.intro-on { overflow: hidden; }
   background: var(--text-dim);
 }
 
+/* ===== فتح المشروع =====
+   الكارت في الفراغ بيتمدد ويبقى هيرو صفحة المشروع. المتصفح بيعمل
+   المورف بين العنصرين اللي ليهم نفس transition:name، بس بتوقيته هو
+   (0.25s ease) — وده أسرع من إن العين تتابعه.
+   الأرقام دي من موكاب ae/open-mockup.jsx: 1.05s ومنحنى الموقع.
+   الجذر بيفضل سريع عشان الصفحة ماتقعدش تخبت. */
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 1.05s;
+  animation-timing-function: var(--ease-out);
+}
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: .4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation-duration: .01s; }
+}
+
 /* ===== مسح الانتقال بين الصفحات ===== */
 .wipe {
   position: fixed; inset: 0; z-index: 9500;

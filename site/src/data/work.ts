@@ -97,6 +97,12 @@ export const allItems = sections.flatMap((s) =>
   s.items.map((it) => ({ ...it, section: s.label, sectionId: s.id })),
 );
 
+/** اسم ملف اللوب = slug المشروع (`brand-film.mp4`) — **مصدر واحد**.
+ *  كان فيه تسميتين: الرئيسية بترقم (`motion-1`) وصفحة المشروع
+ *  بالقسم+الـslug، فملف واحد مكنش يخدم الاتنين والهيرو كان هيفضل
+ *  فاضي مهما تضيف. الـslug فريد أصلًا (هو مسار الصفحة). */
+export const loopBase = (slug: string) => slug;
+
 /** الصفحتين دول ليهم صفحاتهم الخاصة، مش صفحات مشاريع */
 export const projectItems = allItems.filter(
   (i) => i.sectionId !== 'about' && i.sectionId !== 'contact',

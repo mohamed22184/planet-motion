@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import Base from '../../layouts/Base.astro';
-import { projectItems } from '../../data/work';
+import { projectItems, loopBase } from '../../data/work';
 
 export function getStaticPaths() {
   return projectItems.map((item, i) => ({
@@ -15,8 +15,9 @@ const { item, next } = Astro.props;
 
 const loopsDir = path.join(process.cwd(), 'public', 'loops');
 const loopFiles = new Set(fs.existsSync(loopsDir) ? fs.readdirSync(loopsDir) : []);
-const mp4 = `${item.sectionId}-${item.slug}.mp4`;
-const webm = `${item.sectionId}-${item.slug}.webm`;
+const base = loopBase(item.slug);
+const mp4 = `${base}.mp4`;
+const webm = `${base}.webm`;
 const hasLoop = loopFiles.has(mp4) || loopFiles.has(webm);
 
 const credits = [
@@ -27,7 +28,10 @@ const credits = [
 ] as const;
 ---
 
-<Base title={`${item.title} — Planet Motion`}>
+<Base
+  title={`${item.title} — Planet Motion`}
+  description={`${item.title} — ${item.client} · ${item.role} · ${item.year}. ${item.section} work by Mohamed, Planet Motion.`}
+>
   <div class="frame" aria-hidden="true">
     <i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i>
   </div>

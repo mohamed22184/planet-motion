@@ -2,21 +2,39 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ClientRouter } from 'astro:transitions';
-import { sections } from '../data/work';
+import { sections, loopBase } from '../data/work';
 import Mark from '../components/Mark.astro';
+import Planet from '../components/Planet.astro';
 import '../styles/global.css';
 
 // نفس منطق الكروت: الكارت اللي ملوش لوب مابياخدش عنصر فيديو أصلًا
 const loopsDir = path.join(process.cwd(), 'public', 'loops');
 const loopFiles = new Set(fs.existsSync(loopsDir) ? fs.readdirSync(loopsDir) : []);
-const firstLoop = (id: string) => {
-  for (const ext of ['mp4', 'webm']) {
-    if (loopFiles.has(`${id}-1.${ext}`)) return `/loops/${id}-1.${ext}`;
+const firstLoop = (sec: (typeof sections)[number]) => {
+  for (const it of sec.items) {
+    for (const ext of ['mp4', 'webm']) {
+      const f = `${loopBase(it.slug)}.${ext}`;
+      if (loopFiles.has(f)) return `/loops/${f}`;
+    }
   }
   return '';
 };
-interface Props { title: string; }
-const { title } = Astro.props;
+interface Props {
+  title: string;
+  /** سطر المشاركة — اللي بيظهر في جوجل وفي واتساب لما اللينك يتبعت */
+  description?: string;
+}
+const {
+  title,
+  description = 'Mohamed — video editor and motion designer. Cairo and Riyadh. Film, motion systems, and AI-finished work that holds up on a client timeline.',
+} = Astro.props;
+
+// الدومين لسه مش متقرر (planetmotion.com محجوز). دلوقتي بنستخدم
+// اللي الموقع نفسه بيستخدمه في الإيميل — ولو اتغير، يتغيّر في
+// astro.config.mjs بس.
+const SITE = Astro.site ?? new URL('https://planetmotion.studio');
+const canonical = new URL(Astro.url.pathname, SITE).href;
+const ogImage = new URL('/og.jpg', SITE).href;
 ---
 <!doctype html>
 <html lang="en">
@@ -53,6 +71,19 @@ const { title } = Astro.props;
       `} />
     )}
     <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <!-- اللينك لما يتبعت: صورة ونص بدل لينك عريان -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Planet Motion" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="800" />
+    <meta property="og:image:height" content="420" />
+    <meta name="twitter:card" content="summary_large_image" />
 
     <!-- الخطوط متنزّلة على الموقع (شوف src/styles/fonts.css).
          الـpreload للاتنين اللي بيظهروا في أول فريم بس — أي خط زيادة
@@ -96,7 +127,7 @@ const { title } = Astro.props;
               <a
                 href={sec.id === 'about' || sec.id === 'contact' ? `/${sec.id}` : `/#${sec.id}`}
                 data-sec={sec.id}
-                data-loop={firstLoop(sec.id)}
+                data-loop={firstLoop(sec)}
               >
                 <span class="mono n">{String(i + 1).padStart(2, '0')}</span>
                 <span class="menu-line"><span>{sec.label}</span></span>
@@ -116,57 +147,7 @@ const { title } = Astro.props;
 
     <div class="intro" id="intro" aria-hidden="true">
       <div class="intro-stage">
-        <!-- علامة الكوكب بترسم نفسها. الكاميرا هي اللي بتلف حوالين
-             الكوكب: الحزام بيبدأ شبه خط (شايفينه من مستوى مداره)
-             وبيتفتّح لحد ميله الطبيعي — والنص البعيد منه مخفي ورا
-             الكرة، فالترتيب نفسه بيدي عمق. مفيش فلتر SVG على حاجة
-             بتتحرك؛ الكل تدرّجات + تمويه CSS على الكرة بس. -->
-        <svg class="intro-planet" viewBox="-100 -100 200 200"
-             aria-hidden="true" focusable="false">
-          <defs>
-            <clipPath id="ip-globe"><circle r="42" /></clipPath>
-            <radialGradient id="ip-body" cx="34%" cy="26%" r="78%">
-              <stop offset="0%"   stop-color="#B06A3C" />
-              <stop offset="42%"  stop-color="#6E3C24" />
-              <stop offset="78%"  stop-color="#3A2018" />
-              <stop offset="100%" stop-color="#180F0C" />
-            </radialGradient>
-            <radialGradient id="ip-shade" cx="32%" cy="24%" r="82%">
-              <stop offset="0%"   stop-color="#FFFFFF" stop-opacity=".10" />
-              <stop offset="46%"  stop-color="#140F0D" stop-opacity="0" />
-              <stop offset="100%" stop-color="#0B0706" stop-opacity=".88" />
-            </radialGradient>
-            <linearGradient id="ip-rim" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%"   stop-color="#E8A06A" stop-opacity=".75" />
-              <stop offset="45%"  stop-color="#E8A06A" stop-opacity="0" />
-            </linearGradient>
-          </defs>
-
-          <!-- النص البعيد من الحزام — بيتخفي ورا الكرة -->
-          <g class="ip-tilt"><path class="ip-belt" id="ipFar" d="M -76 0 A 76 27 0 0 1 76 0" /></g>
-
-          <g class="ip-globe" id="ipGlobe">
-            <g clip-path="url(#ip-globe)" transform="rotate(-22)">
-              <circle r="42" fill="url(#ip-body)" />
-              <g opacity=".5">
-                <ellipse cy="-24" rx="42" ry="6"   fill="#2A1712" />
-                <ellipse cy="-9"  rx="42" ry="4"   fill="#C2561B" />
-                <ellipse cy="4"   rx="42" ry="7"   fill="#2A1712" />
-                <ellipse cy="20"  rx="42" ry="5"   fill="#3E2723" />
-              </g>
-              <ellipse cx="-12" cy="9" rx="9" ry="4.5" fill="#E65100" opacity=".8" />
-              <circle r="42" fill="url(#ip-shade)" />
-            </g>
-            <circle r="41.2" fill="none" stroke="url(#ip-rim)" stroke-width="1.6" />
-          </g>
-
-          <!-- النص القريب فوق الكرة، ومعاه رأس تشغيل بيلفّ المدار -->
-          <g class="ip-tilt">
-            <path class="ip-belt" id="ipNear" d="M 76 0 A 76 27 0 0 1 -76 0" />
-            <path class="ip-play" id="ipPlay" d="M 76 0 A 76 27 0 0 1 -76 0" />
-          </g>
-        </svg>
-
+        <Planet />
         <span class="intro-name mono" id="introName">Planet Motion</span>
       </div>
       <span class="intro-tc mono" id="introTc">00:00:00:00</span>

@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import Base from '../layouts/Base.astro';
-import { sections } from '../data/work';
+import { sections, loopBase } from '../data/work';
 import Mark from '../components/Mark.astro';
 
 // بنقرا اللوبات الموجودة فعلًا وقت البناء. الكارت اللي ملوش ملف
@@ -14,6 +14,8 @@ const loopFiles = new Set(
 );
 const hasLoop = (name: string) =>
   loopFiles.has(`${name}.mp4`) || loopFiles.has(`${name}.webm`);
+const loopSrc = (name: string, ext: 'mp4' | 'webm') =>
+  loopFiles.has(`${name}.${ext}`) ? `/loops/${name}.${ext}` : '';
 
 // كل قسم = مجموعة فيديوهات في عنقود ثلاثي الأبعاد.
 // x/y/z = مركز العنقود · العناصر متوزعة حواليه بإزاحات صغيرة
@@ -115,12 +117,12 @@ const SEGS = sections.length + 1;
               >
                 {/* preload="none" مقصودة: مفيش بايت واحد بينزل لحد ما
                     القسم يقرب. الـmp4 الأول والـwebm احتياطي. */}
-                {hasLoop(`${sec.id}-${ii + 1}`) && (
+                {hasLoop(loopBase(it.slug)) && (
                   <video
                     class="v"
                     muted loop playsinline preload="none"
-                    data-mp4={loopFiles.has(`${sec.id}-${ii + 1}.mp4`) ? `/loops/${sec.id}-${ii + 1}.mp4` : ''}
-                    data-webm={loopFiles.has(`${sec.id}-${ii + 1}.webm`) ? `/loops/${sec.id}-${ii + 1}.webm` : ''}
+                    data-mp4={loopSrc(loopBase(it.slug), 'mp4')}
+                    data-webm={loopSrc(loopBase(it.slug), 'webm')}
                   ></video>
                 )}
                 <span class="ar mono">{it.ar.replace(/ /g, '')}</span>
@@ -309,7 +311,11 @@ const SEGS = sections.length + 1;
 <script>
   import { gsap } from 'gsap';
   import { ScrollTrigger } from 'gsap/ScrollTrigger';
-  gsap.registerPlugin(ScrollTrigger);
+  import { CustomEase } from 'gsap/CustomEase';
+  gsap.registerPlugin(ScrollTrigger, CustomEase);
+
+  // منحنى الموقع — هو نفسه اللي الموكاب في ae/ متبني بيه ومقروء منه
+  const PM = CustomEase.create('pm', 'M0,0 C0.16,1 0.3,1 1,1');
 
   // مع راوتر Astro سكربت الموديول بيتنفّذ مرة واحدة، فالتهيئة بتتنادى
   // على astro:page-load. والمستمعين كلهم مربوطين بـsignal عشان يتفكّوا
@@ -339,12 +345,15 @@ const SEGS = sections.length + 1;
       el: HTMLElement; sec: number;
       bx: number; by: number; bz: number; bw: number;   // القيم الأساسية
       x: number; y: number; z: number;                  // بعد القياس
+      a: number;                                        // الوصول: 0 لسه جاي · 1 في مكانه
+      t0: number; dur: number;                          // بداية ومدة وصوله
     };
     const items: Card[] = cards.map((el) => ({
       el, sec: Number(el.dataset.sec),
       bx: Number(el.dataset.x), by: Number(el.dataset.y),
       bz: Number(el.dataset.z), bw: Number(el.dataset.w),
       x: 0, y: 0, z: 0,
+      a: 1, t0: 0, dur: 1,
     }));
   
     let fit = 1;
@@ -358,8 +367,12 @@ const SEGS = sections.length + 1;
     // اللقطة الواسعة متحسوبة من امتداد الكروت الفعلي، مش أرقام ثابتة —
     // كده أي تعديل في المواقع بيتظبط لوحده.
     const computeWide = (): WP => {
-      const halfW = items.map((c) => Math.abs(c.x) + (Number(c.el.dataset.w) * fit) / 2);
-      const halfH = items.map((c) => Math.abs(c.y) + (Number(c.el.dataset.w) * fit) / 2);
+      // الارتفاع بيتاخد من العنصر نفسه مش من عرضه: نسب الأبعاد
+      // مختلفة (16:9 و9:16 و1:1)، واستخدام العرض للمحورين كان
+      // بيضخّم الامتداد الرأسي فالكاميرا تبعد أكتر من اللازم
+      // والتكوين يقعد في نص الفريم وحواليه فراغ.
+      const halfW = items.map((c) => Math.abs(c.x) + c.el.offsetWidth / 2);
+      const halfH = items.map((c) => Math.abs(c.y) + c.el.offsetHeight / 2);
       // الهدف هو الريل نفسه (مركز الفراغ) مش مركز صندوق الإحاطة.
       // لو اتمركزنا على صندوق الإحاطة، الريل بيزيح عن النص لأن
       // الأقسام مش متوزعة بالتساوي حواليه تمامًا. وحساب halfW/halfH
@@ -377,10 +390,63 @@ const SEGS = sections.length + 1;
       // الكروت الأقرب بتتكبر أكتر من المركز، فبناخد هامش أمان
       // 0.82 مش 1: الكروت الأقرب بتتكبر أكتر من المركز، وبارالاكس
       // الماوس بيلفّ المشهد — الهامش بيحسب للاتنين
-      const d = P * (1 - 1 / (need * 0.82));
+      const d = P * (1 - 1 / (need * 0.9));
       return { tx, ty, tz, d, rx: 0, ry: 0 };
     };
   
+    // ===== التجميع =====
+    // الكروت مش بتيجي من حواف الشاشة: دي حركة مسطّحة. بتيجي من
+    // **أعمق** في نفس الفراغ وبتتجمّع للداخل، فالمنظور بيدي
+    // البارالاكس لوحده. والمدة بتختلف بالعمق — لو كلهم بنفس السرعة
+    // المخ بيقراهم كطبقة واحدة (ده اللي سقّط تجربة الكوكب الأولى).
+    // الأرقام دي من موكاب ae/build-assembly.mjs بالظبط.
+    const ARRIVE_Z = -2600, ARRIVE_SPREAD = 1.35;
+
+    const placeCards = () => {
+      items.forEach((c) => {
+        const k = 1 + (ARRIVE_SPREAD - 1) * (1 - c.a);
+        gsap.set(c.el, {
+          xPercent: -50, yPercent: -50,
+          x: c.x * k, y: c.y * k,
+          z: c.z + ARRIVE_Z * (1 - c.a) * fit,
+        });
+      });
+    };
+
+    if (!reduced) {
+      // الريل موجود من الفريم صفر — قاعدة الـ6 ثواني. والباقي
+      // بيوصل بالترتيب من النص لبرّه.
+      const far = items.map((c) => Math.abs(c.bz));
+      const fMin = Math.min(...far), fMax = Math.max(...far);
+      [...items]
+        .sort((p, q) => Math.hypot(p.bx, p.by) - Math.hypot(q.bx, q.by))
+        .forEach((c, k) => {
+          c.a = c.sec === 0 ? 1 : 0;
+          c.t0 = c.sec === 0 ? 0 : 0.5 + k * 0.07;
+          c.dur = 1.05 + 0.85 * ((Math.abs(c.bz) - fMin) / (fMax - fMin || 1));
+        });
+    }
+
+    // تويينة واحدة بتحرّك ساعة، وكل كارت بيحسب وصوله منها. 16 تويينة
+    // منفصلة كانت هتنادي placeCards 16 مرة في الفريم الواحد.
+    let assembled = reduced;
+    const clock = { t: 0 };
+    const assemble = () => {
+      if (assembled) return;
+      assembled = true;
+      const end = Math.max(...items.map((c) => c.t0 + c.dur));
+      gsap.to(clock, {
+        t: end, duration: end, ease: 'none',
+        onUpdate: () => {
+          items.forEach((c) => {
+            c.a = c.sec === 0 ? 1 : PM(gsap.utils.clamp(0, 1, (clock.t - c.t0) / c.dur));
+          });
+          placeCards();
+          applyCamera();
+        },
+      });
+    };
+
     // كل الأطوال بتتقاس بنفس النسبة — المواقع والعروض والمسافات
     // والـperspective. لازم تتنادى تاني مع أي تغيير في مقاس النافذة،
     // وإلا التكوين بيبوظ.
@@ -391,8 +457,8 @@ const SEGS = sections.length + 1;
       items.forEach((c) => {
         c.x = c.bx * fit; c.y = c.by * fit; c.z = c.bz * fit;
         c.el.style.width = `${c.bw * fit}px`;
-        gsap.set(c.el, { xPercent: -50, yPercent: -50, x: c.x, y: c.y, z: c.z });
       });
+      placeCards();
       motes.forEach((m) => {
         gsap.set(m, {
           xPercent: -50, yPercent: -50,
@@ -479,7 +545,7 @@ const SEGS = sections.length + 1;
         // بكتير من تمويه صورة ثابتة (اللي بتترسم مرة واحدة).
         const playing = c.sec === lastSec;
         const b = playing ? 0 : Math.round(Math.min(dist / (520 * fit), 7) * 2) / 2;
-        const o = Math.round(Math.max(1 - dist / (3400 * fit), 0.12) * 20) / 20;
+        const o = Math.round(Math.max(1 - dist / (3400 * fit), 0.12) * c.a * 20) / 20;
   
         if (c.el.dataset.b !== String(b)) {
           c.el.style.filter = b ? `blur(${b}px)` : 'none';
@@ -597,6 +663,10 @@ const SEGS = sections.length + 1;
       cam.ry = a.ry + (b.ry - a.ry) * f;
       applyCamera();
       markMoving();
+      // أول حركة حقيقية = بداية التجميع. مابنشغّلوش على التحميل:
+      // عند اللقطة الافتتاحية الكاميرا قريبة على الريل والكروت برّه
+      // الفريم، فكانت هتبقى حركة محدش شايفها.
+      if (p > 0.004) assemble();
     };
   
     // رأس التشغيل والخط والاسم — كلهم بيتحركوا مع نفس القيمة
@@ -683,6 +753,7 @@ const SEGS = sections.length + 1;
         const next = gsap.utils.clamp(0, segs, i);
         if (next === idx && !jumping) return;
         idx = next;
+        if (next > 0) assemble();
   
         // الحدود بتتاخد من ScrollTrigger نفسه مش من offsetTop/offsetHeight:
         // بعد التحميل الأبعاد بتتغير مع تحميل الخطوط، وScrollTrigger بيعيد

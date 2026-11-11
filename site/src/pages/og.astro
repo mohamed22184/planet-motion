@@ -1,0 +1,64 @@
+---
+import Planet from '../components/Planet.astro';
+import '../styles/global.css';
+
+// صفحة أداة مش صفحة زائر: دي اللي بنصوّر منها /og.jpg.
+// المقاس 800×420 مش 1200×630 لأن الصورة بتتاخد من المتصفح
+// بمقاسه الحقيقي — وصورة حادة 800 أحسن من 1200 مكبّرة. ده فوق
+// الحد الأدنى للمنصات (600×315) بفارق مريح.
+// سايبينها في الريبو عشان لو الهوية اتغيّرت نعيد التصوير بدل ما
+// نفتح برنامج تصميم. مستثناة من الـsitemap.
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>OG card — Planet Motion</title>
+  </head>
+  <body>
+    <div class="og">
+      <Planet class="og-planet" />
+      <div class="og-t">
+        <strong>Planet Motion</strong>
+        <span class="mono">Video editor · Motion designer</span>
+        <span class="mono dim">Cairo · Riyadh</span>
+      </div>
+    </div>
+  </body>
+</html>
+
+<style is:global>
+  /* الكارت متمركز والباقي فراغ أسود: شريط أدوات المعاينة بيقف في
+     نص الحافة السفلى، ولو الكارت ملا الشاشة كان هيتصوّر جوّه الصورة.
+     بنصوّر 800×580 وبنقص 800×420 من النص (sips بيقص من النص). */
+  body {
+    margin: 0; overflow: hidden; background: #000;
+    height: 100vh; display: flex; align-items: center; justify-content: center;
+  }
+  body::after { display: none; }   /* الجرين بيتحوّل لضوضاء في JPEG */
+
+  .og {
+    width: 800px; height: 420px;
+    background: var(--ink);
+    display: flex; align-items: center; gap: 44px;
+    padding: 0 64px; box-sizing: border-box;
+    position: relative;
+  }
+  /* نفس خط الأكسنت اللي في البريلودر — الحافة القُدّام */
+  .og::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0;
+    height: 4px; background: var(--accent);
+  }
+  .og-planet { width: 200px; height: 200px; flex: none; overflow: visible; }
+  .ip-belt { fill: none; stroke: var(--text-dim); stroke-width: 1.7; opacity: .8; vector-effect: non-scaling-stroke; }
+  .ip-play { fill: none; stroke: var(--accent); stroke-width: 2.8; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+
+  .og-t { display: grid; gap: 13px; justify-items: start; }
+  .og-t strong {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 62px; line-height: .9; letter-spacing: -.035em;
+    color: var(--text);
+  }
+  .og-t .mono { font-size: 14px; letter-spacing: .12em; color: var(--text-dim); white-space: nowrap; }
+  .og-t .dim { color: var(--text-mute); margin-top: -4px; }
+</style>
